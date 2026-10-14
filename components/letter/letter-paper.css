@@ -1,0 +1,117 @@
+.namiya-writing-desk {
+  --paper: #efe3c6;
+  --ink: #514b3c;
+  --rule: 36px;
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: #e8dac0;
+  background: radial-gradient(ellipse at 34% 25%, #846b49 0, #5b4a36 35%, #302a23 78%);
+  box-shadow: inset 0 0 160px #171a1c70;
+  font-family: "Songti SC", "Noto Serif CJK SC", "STSong", "SimSun", serif;
+  outline: none;
+}
+.namiya-writing-desk::before {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  content: "";
+  opacity: .23;
+  background: repeating-linear-gradient(91deg, transparent 0 18px, #1b1a1726 19px, transparent 20px 77px), repeating-linear-gradient(1deg, #e5c99305 0 2px, #211e170d 3px 4px);
+}
+.namiya-writing-desk__light { position: absolute; top: -55vh; left: -20vw; width: 115vw; height: 130vh; pointer-events: none; background: radial-gradient(ellipse, #ffe5a929, transparent 64%); }
+.namiya-writing-desk__toolbar { position: relative; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 22px 40px; border-bottom: 1px solid #d7c69b15; }
+.namiya-writing-desk__eyebrow { font-size: 12px; letter-spacing: .18em; color: #d6c8af; }
+.namiya-writing-desk__eyebrow > span { margin: 0 15px; opacity: .45; }
+.namiya-writing-desk__close { min-height: 44px; border: 0; padding: 4px 0 4px 15px; background: transparent; color: #e4d5bc; font: inherit; font-size: 12px; cursor: pointer; }
+.namiya-writing-desk__close > span { display: inline-block; margin-left: 18px; font-family: sans-serif; font-size: 24px; vertical-align: -2px; }
+.namiya-writing-desk__scroll { position: relative; flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; scrollbar-color: #b6a27e55 transparent; scrollbar-width: thin; }
+.namiya-writing-desk__workspace { position: relative; width: min(100% - 80px, 680px); margin: 32px auto 64px; }
+.letter-sheet-stack { position: relative; isolation: isolate; perspective: 1400px; }
+.letter-sheet-stack::before, .letter-sheet-stack::after { position: absolute; inset: 0; z-index: -1; display: block; content: ""; background: #daccae; border: 1px solid #b9a783; box-shadow: 0 6px 9px #21180825; }
+.letter-sheet-stack::before { transform: rotate(-1.1deg) translate(-2px, 5px); }
+.letter-sheet-stack::after { transform: rotate(.7deg) translate(2px, 7px); }
+.letter-sheet { position: relative; min-height: 630px; padding: 40px 56px 32px; color: var(--ink); background: radial-gradient(ellipse at 10% 70%, #d5bd8426, transparent 65%), linear-gradient(96deg, #e3d6b4 0%, #f3e9d0 6%, #f3e9d0 47%, #e2d5b7 50%, #f0e6cd 51%, #eee2c3 100%); border: 1px solid #e8d8b5; box-shadow: 0 25px 55px #130c0759, 0 3px 4px #130c0733; clip-path: polygon(.25% .2%, 16% 0, 36% .15%, 59% 0, 81% .12%, 99.8% 0, 100% 23%, 99.8% 57%, 100% 82%, 99.8% 99.8%, 78% 100%, 45% 99.85%, 20% 100%, 0 99.75%, .18% 71%, 0 41%); }
+.letter-sheet__texture { position: absolute; inset: 0; pointer-events: none; opacity: .3; mix-blend-mode: multiply; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.66' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Cpath fill='%23836d45' opacity='.3' d='M0 0h180v180H0z' filter='url(%23n)'/%3E%3C/svg%3E"); }
+.letter-sheet__crease { position: absolute; right: 0; left: 0; height: 7px; pointer-events: none; opacity: .45; background: linear-gradient(transparent, #7f68451a 47%, #fff9e34d 57%, transparent); }
+.letter-sheet__crease--top { top: 33.333%; transform: rotate(-.15deg); }
+.letter-sheet__crease--bottom { top: 66.666%; transform: rotate(.12deg); }
+.letter-sheet__content { position: relative; z-index: 1; }
+.letter-sheet__masthead { display: flex; justify-content: space-between; align-items: center; margin-bottom: 36px; color: #968564; font-size: 11px; letter-spacing: .16em; line-height: 1.9; text-align: right; }
+.letter-sheet__masthead [lang="en"] { font-family: Georgia, serif; font-size: 8px; letter-spacing: .14em; }
+.letter-sheet__mark { display: inline-flex; align-items: center; justify-content: center; width: 37px; height: 37px; border: 1px solid #a5594773; color: #9d6350; font-size: 14px; letter-spacing: .05em; transform: rotate(-5deg); }
+.letter-sheet__salutation { margin: 0 0 22px; font-size: 18px; line-height: 1.8; font-weight: 400; letter-spacing: .08em; }
+.letter-sheet__title { display: block; margin-bottom: 17px; }
+.letter-sheet__title input { width: 100%; padding: 0 0 8px; background: transparent; border: 0; border-bottom: 1px solid #ac987e35; outline: none; color: var(--ink); font-family: inherit; font-size: 13px; line-height: 26px; letter-spacing: .06em; }
+.letter-sheet__title input::placeholder { color: #aa9b7d; }
+.letter-sheet__body { display: block; box-sizing: border-box; width: 100%; min-height: calc(var(--rule) * 9); overflow: hidden; resize: none; border: 0; border-radius: 0; padding: 0 0 1px; margin: 0; outline: none; color: #4a4a40; caret-color: #9d5039; background: repeating-linear-gradient(to bottom, transparent 0, transparent calc(var(--rule) - 1px), #9f8b663b calc(var(--rule) - 1px), #9f8b663b var(--rule)); font-family: inherit; font-size: 16px; font-weight: 400; line-height: var(--rule); letter-spacing: .08em; overflow-wrap: anywhere; }
+.letter-sheet__body::placeholder { color: #9b8e75; opacity: .78; }
+.letter-sheet__body:disabled, .letter-sheet__title input:disabled { opacity: 1; -webkit-text-fill-color: #514b3c; }
+.letter-sheet__signature { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin-top: 32px; color: #9b896b; font-size: 11px; line-height: 1.9; letter-spacing: .08em; }
+.letter-sheet__signature > span:last-child { color: #7e715b; white-space: nowrap; }
+.namiya-writing-desk__pencil { position: absolute; z-index: 2; top: 220px; right: -65px; width: 9px; height: 290px; pointer-events: none; transform: rotate(12deg); background: linear-gradient(90deg, #5c3821, #ad7e45 25%, #d4a969 45%, #997141 65%, #62462b); box-shadow: 7px 9px 8px #1f18083d; border-radius: 2px 2px 0 0; }
+.namiya-writing-desk__pencil::after { position: absolute; top: 100%; left: 0; width: 9px; height: 30px; background: linear-gradient(#bea279 0 70%, #34352e 70%); clip-path: polygon(0 0, 100% 0, 50% 100%); content: ""; }
+.namiya-writing-desk__below { padding: 27px 2px 0; }
+.namiya-writing-desk__settings { font-family: sans-serif; font-size: 11px; color: #ccbda2; }
+.namiya-writing-desk__settings > summary { min-height: 38px; padding: 7px 0; cursor: pointer; list-style: none; letter-spacing: .05em; }
+.namiya-writing-desk__settings > summary::-webkit-details-marker { display: none; }
+.namiya-writing-desk__settings > summary > span { display: inline-block; margin-left: 15px; border-bottom: 1px solid #d8c4a05e; padding-bottom: 2px; color: #e3d5bd; }
+.namiya-writing-desk__settings-content { padding: 17px 0 9px; border-top: 1px solid #d3bd922e; }
+.namiya-writing-desk__settings-content > label:first-child { display: flex; align-items: center; gap: 12px; }
+.namiya-writing-desk__settings select { padding: 7px 20px 7px 10px; border: 1px solid #bdaa8659; background: #3e362a; color: #ecdfc7; font: inherit; }
+.namiya-writing-desk__privacy { display: flex; gap: 9px; align-items: center; padding: 18px 0 10px; line-height: 1.8; }
+.namiya-writing-desk__privacy input { width: 15px; height: 15px; accent-color: #a99165; }
+.namiya-writing-desk__settings-content > p { margin: 0 0 10px; color: #ac9c82; font-size: 10px; line-height: 1.8; }
+.namiya-writing-desk__actions { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-top: 13px; }
+.namiya-writing-desk__actions > p { margin: 0; color: #bdad91; font-size: 11px; letter-spacing: .05em; line-height: 1.8; }
+.namiya-writing-desk__fold-button { display: inline-flex; align-items: center; justify-content: space-between; gap: 36px; flex-shrink: 0; min-height: 48px; padding: 12px 22px; border: 1px solid #d2bd9359; border-radius: 2px; background: #cfbd9440; color: #f0e5d0; font: inherit; font-size: 13px; letter-spacing: .12em; box-shadow: inset 0 1px 0 #f3dfb515; cursor: pointer; transition: background .2s, transform .2s; }
+.namiya-writing-desk__fold-button:hover { background: #cfbd9466; transform: translateY(-2px); }
+.namiya-writing-desk__fold-button:disabled { cursor: wait; }
+.namiya-writing-desk__error { margin: 8px 0; color: #ffccb7; font-size: 12px; line-height: 1.8; }
+.namiya-writing-desk button:focus-visible, .namiya-writing-desk summary:focus-visible, .namiya-writing-desk select:focus-visible, .namiya-writing-desk input[type="checkbox"]:focus-visible { outline: 2px solid #e0c495; outline-offset: 5px; }
+.letter-sheet__title input:focus-visible { border-bottom-color: #96794f; }
+.namiya-writing-desk__fold-status { position: fixed; bottom: 12%; left: 0; right: 0; margin: 0; text-align: center; color: #e8d7b7; font-size: 13px; letter-spacing: .15em; pointer-events: none; }
+.letter-fold, .letter-fold-envelope { display: none; }
+.namiya-writing-desk--folding .namiya-writing-desk__below, .namiya-writing-desk--folding .namiya-writing-desk__pencil { opacity: 0; pointer-events: none; }
+.namiya-writing-desk--folding .letter-sheet-stack { position: fixed; z-index: 5; top: 50%; left: 50%; width: min(570px, 86vw); height: min(610px, 66dvh); margin: 0; animation: letter-packet 1.9s both; }
+.namiya-writing-desk--folding .letter-sheet-stack::before, .namiya-writing-desk--folding .letter-sheet-stack::after { display: none; }
+.namiya-writing-desk--folding .letter-sheet { min-height: 0; height: 100%; overflow: hidden; animation: letter-face 1.9s both; }
+.namiya-writing-desk--folding .letter-fold { position: absolute; left: 0; right: 0; z-index: 4; display: block; height: 33.333%; background: linear-gradient(100deg, #e0d0ad, #f3e6c7 15%, #eee0bf 80%, #d6c39e); border: 1px solid #b8a279; box-shadow: 0 1px 12px #55412233; backface-visibility: visible; }
+.namiya-writing-desk--folding .letter-fold--top { top: 0; transform-origin: bottom center; animation: letter-top-fold 1.9s both; }
+.namiya-writing-desk--folding .letter-fold--bottom { bottom: 0; transform-origin: top center; animation: letter-bottom-fold 1.9s both; }
+.namiya-writing-desk--folding .letter-fold-envelope { position: absolute; inset: 27% -4% 27%; z-index: 6; display: flex; align-items: center; justify-content: center; color: #887053; background: linear-gradient(145deg, #dbc5a1, #efdbb6 45%, #d7bc92); border: 1px solid #ad9570; box-shadow: 0 18px 25px #25190d55; font-size: 18px; letter-spacing: .18em; animation: letter-envelope 1.9s both; }
+.letter-fold-envelope::before, .letter-fold-envelope::after { position: absolute; inset: 0; content: ""; background: #e4ceaa; clip-path: polygon(0 0, 50% 59%, 100% 0); border-top: 1px solid #bca782; }
+.letter-fold-envelope::after { background: #d8bf98; clip-path: polygon(0 100%, 50% 40%, 100% 100%); }
+.letter-fold-envelope > span { position: relative; z-index: 2; margin-top: 50px; font-size: 13px; }
+.letter-fold-envelope > i { position: absolute; z-index: 3; top: 40%; left: calc(50% - 15px); width: 30px; height: 30px; border-radius: 50%; background: #954c3c; box-shadow: inset 0 0 0 3px #ae6554, 0 2px 4px #5738253b; }
+@keyframes letter-packet { 0%, 12% { transform: translate(-50%, -50%) rotate(-1deg); } 64% { transform: translate(-50%, -50%) rotate(0) scale(.78); } 100% { transform: translate(-50%, -50%) rotate(-5deg) scale(.7); } }
+@keyframes letter-top-fold { 0%, 9% { opacity: 0; transform: rotateX(0); } 10% { opacity: 1; } 42%, 100% { opacity: 1; transform: rotateX(-180deg); } }
+@keyframes letter-bottom-fold { 0%, 35% { opacity: 0; transform: rotateX(0); } 36% { opacity: 1; } 69%, 100% { opacity: 1; transform: rotateX(180deg); } }
+@keyframes letter-face { 0%, 40% { clip-path: inset(0); } 41%, 68% { clip-path: inset(33.333% 0 0); } 69%, 100% { clip-path: inset(33.333% 0); } }
+@keyframes letter-envelope { 0%, 64% { opacity: 0; transform: translateY(45px) scale(.92); } 86%, 100% { opacity: 1; transform: translateY(0) scale(1); } }
+@media (max-width: 640px) {
+  .namiya-writing-desk { --rule: 32px; }
+  .namiya-writing-desk__toolbar { padding: 9px 18px; }
+  .namiya-writing-desk__eyebrow { font-size: 10px; letter-spacing: .05em; }
+  .namiya-writing-desk__eyebrow > span { margin: 0 7px; }
+  .namiya-writing-desk__close { font-size: 11px; }
+  .namiya-writing-desk__close > span { margin-left: 8px; }
+  .namiya-writing-desk__workspace { width: calc(100% - 34px); margin-top: 22px; margin-bottom: 35px; }
+  .letter-sheet { min-height: 565px; padding: 28px 25px 25px; }
+  .letter-sheet__masthead { margin-bottom: 28px; }
+  .letter-sheet__salutation { margin-bottom: 18px; font-size: 16px; }
+  .letter-sheet__body { font-size: 15px; }
+  .letter-sheet__signature { font-size: 9px; letter-spacing: 0; }
+  .namiya-writing-desk__pencil { display: none; }
+  .namiya-writing-desk__actions { align-items: stretch; flex-direction: column; gap: 15px; }
+  .namiya-writing-desk__fold-button { justify-content: center; }
+  .namiya-writing-desk__fold-status { bottom: 10%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .namiya-writing-desk *, .namiya-writing-desk *::before, .namiya-writing-desk *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+
+
