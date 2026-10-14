@@ -1,0 +1,326 @@
+[
+  {
+    "id": "grandpa",
+    "canvas": [
+      1024,
+      768
+    ],
+    "layers": [
+      {
+        "id": "background",
+        "file": "/indoor/optimized/grandpa/background.webp",
+        "depth": 0.18,
+        "zIndex": 1,
+        "bounds": [
+          0,
+          0,
+          1024,
+          768
+        ],
+        "contentBounds": [
+          0,
+          0,
+          1024,
+          768
+        ]
+      },
+      {
+        "id": "keeper",
+        "file": "/indoor/optimized/grandpa/keeper.webp",
+        "depth": 0.52,
+        "zIndex": 2,
+        "bounds": [
+          0,
+          0,
+          1024,
+          768
+        ],
+        "contentBounds": [
+          490,
+          205,
+          300,
+          510
+        ]
+      },
+      {
+        "id": "counter",
+        "file": "/indoor/optimized/grandpa/counter.webp",
+        "depth": 0.85,
+        "zIndex": 3,
+        "bounds": [
+          0,
+          0,
+          1024,
+          768
+        ],
+        "contentBounds": [
+          18,
+          490,
+          988,
+          270
+        ]
+      },
+      {
+        "id": "decor",
+        "file": "/indoor/optimized/grandpa/decor.webp",
+        "depth": 1.15,
+        "zIndex": 4,
+        "bounds": [
+          0,
+          0,
+          1024,
+          768
+        ],
+        "contentBounds": [
+          0,
+          20,
+          1024,
+          330
+        ]
+      }
+    ]
+  },
+  {
+    "id": "sashimi",
+    "canvas": [
+      1024,
+      768
+    ],
+    "layers": [
+      {
+        "id": "background",
+        "file": "/indoor/optimized/sashimi/background.webp",
+        "depth": 0.18,
+        "zIndex": 1,
+        "bounds": [
+          0,
+          0,
+          1024,
+          768
+        ],
+        "contentBounds": [
+          0,
+          0,
+          1024,
+          768
+        ]
+      },
+      {
+        "id": "keeper",
+        "file": "/indoor/optimized/sashimi/keeper.webp",
+        "depth": 0.52,
+        "zIndex": 2,
+        "bounds": [
+          0,
+          0,
+          1024,
+          768
+        ],
+        "contentBounds": [
+          560,
+          285,
+          285,
+          440
+        ]
+      },
+      {
+        "id": "counter",
+        "file": "/indoor/optimized/sashimi/counter.webp",
+        "depth": 0.85,
+        "zIndex": 3,
+        "bounds": [
+          0,
+          0,
+          1024,
+          768
+        ],
+        "contentBounds": [
+          22,
+          415,
+          980,
+          340
+        ]
+      },
+      {
+        "id": "decor",
+        "file": "/indoor/optimized/sashimi/decor.webp",
+        "depth": 1.15,
+        "zIndex": 4,
+        "bounds": [
+          0,
+          0,
+          1024,
+          768
+        ],
+        "contentBounds": [
+          95,
+          130,
+          920,
+          365
+        ]
+      }
+    ]
+  },
+  {
+    "id": "dessert",
+    "canvas": [
+      1024,
+      768
+    ],
+    "layers": [
+      {
+        "id": "background",
+        "file": "/indoor/optimized/dessert/background.webp",
+        "depth": 0.18,
+        "zIndex": 1,
+        "bounds": [
+          0,
+          0,
+          1024,
+          768
+        ],
+        "contentBounds": [
+          0,
+          0,
+          1024,
+          768
+        ]
+      },
+      {
+        "id": "keeper",
+        "file": "/indoor/optimized/dessert/keeper.webp",
+        "depth": 0.52,
+        "zIndex": 2,
+        "bounds": [
+          0,
+          0,
+          1024,
+          768
+        ],
+        "contentBounds": [
+          450,
+          280,
+          240,
+          400
+        ]
+      },
+      {
+        "id": "counter",
+        "file": "/indoor/optimized/dessert/counter.webp",
+        "depth": 0.85,
+        "zIndex": 3,
+        "bounds": [
+          0,
+          0,
+          1024,
+          768
+        ],
+        "contentBounds": [
+          17,
+          235,
+          990,
+          525
+        ]
+      },
+      {
+        "id": "decor",
+        "file": "/indoor/optimized/dessert/decor.webp",
+        "depth": 1.15,
+        "zIndex": 4,
+        "bounds": [
+          0,
+          0,
+          1024,
+          768
+        ],
+        "contentBounds": [
+          110,
+          135,
+          900,
+          345
+        ]
+      }
+    ]
+  },
+  {
+    "id": "matcha",
+    "canvas": [
+      1024,
+      768
+    ],
+    "layers": [
+      {
+        "id": "background",
+        "file": "/indoor/optimized/matcha/background.webp",
+        "depth": 0.18,
+        "zIndex": 1,
+        "bounds": [
+          0,
+          0,
+          1024,
+          768
+        ],
+        "contentBounds": [
+          0,
+          0,
+          1024,
+          768
+        ]
+      },
+      {
+        "id": "keeper",
+        "file": "/indoor/optimized/matcha/keeper.webp",
+        "depth": 0.52,
+        "zIndex": 2,
+        "bounds": [
+          0,
+          0,
+          1024,
+          768
+        ],
+        "contentBounds": [
+          320,
+          255,
+          310,
+          450
+        ]
+      },
+      {
+        "id": "counter",
+        "file": "/indoor/optimized/matcha/counter.webp",
+        "depth": 0.85,
+        "zIndex": 3,
+        "bounds": [
+          0,
+          0,
+          1024,
+          768
+        ],
+        "contentBounds": [
+          22,
+          190,
+          980,
+          565
+        ]
+      },
+      {
+        "id": "decor",
+        "file": "/indoor/optimized/matcha/decor.webp",
+        "depth": 1.15,
+        "zIndex": 4,
+        "bounds": [
+          0,
+          0,
+          1024,
+          768
+        ],
+        "contentBounds": [
+          110,
+          150,
+          900,
+          380
+        ]
+      }
+    ]
+  }
+]

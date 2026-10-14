@@ -1,0 +1,119 @@
+{
+  "canvas": [
+    1080,
+    1080
+  ],
+  "base": "assets/building_base.png",
+  "layers": [
+    {
+      "name": "roof_antenna",
+      "file": "assets/roof_antenna.png",
+      "bounds": [
+        370,
+        15,
+        490,
+        164
+      ]
+    },
+    {
+      "name": "roof_tiles",
+      "file": "assets/roof_tiles.png",
+      "bounds": [
+        202,
+        143,
+        903,
+        204
+      ]
+    },
+    {
+      "name": "upper_window",
+      "file": "assets/upper_window.png",
+      "bounds": [
+        436,
+        239,
+        710,
+        464
+      ]
+    },
+    {
+      "name": "sign_cola",
+      "file": "assets/sign_cola.png",
+      "bounds": [
+        380,
+        449,
+        625,
+        593
+      ]
+    },
+    {
+      "name": "sign_shop",
+      "file": "assets/sign_shop.png",
+      "bounds": [
+        620,
+        449,
+        859,
+        599
+      ]
+    },
+    {
+      "name": "awning",
+      "file": "assets/awning.png",
+      "bounds": [
+        156,
+        573,
+        900,
+        713
+      ]
+    },
+    {
+      "name": "ground_floor",
+      "file": "assets/ground_floor.png",
+      "bounds": [
+        170,
+        674,
+        879,
+        978
+      ]
+    },
+    {
+      "name": "bicycle",
+      "file": "assets/bicycle.png",
+      "bounds": [
+        589,
+        833,
+        812,
+        991
+      ]
+    },
+    {
+      "name": "air_conditioner",
+      "file": "assets/air_conditioner.png",
+      "bounds": [
+        269,
+        845,
+        412,
+        968
+      ]
+    },
+    {
+      "name": "poster",
+      "file": "assets/poster.png",
+      "bounds": [
+        192,
+        709,
+        276,
+        838
+      ]
+    },
+    {
+      "name": "plants",
+      "file": "assets/plants.png",
+      "bounds": [
+        87,
+        900,
+        287,
+        1004
+      ]
+    }
+  ]
+}

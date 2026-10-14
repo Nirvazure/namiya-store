@@ -1,0 +1,90 @@
+[
+  {
+    "name": "roof_antenna",
+    "file": "roof_antenna.webp",
+    "left": 360,
+    "top": 5,
+    "width": 140,
+    "height": 169
+  },
+  {
+    "name": "roof_tiles",
+    "file": "roof_tiles.webp",
+    "left": 192,
+    "top": 133,
+    "width": 721,
+    "height": 81
+  },
+  {
+    "name": "upper_window",
+    "file": "upper_window.webp",
+    "left": 426,
+    "top": 229,
+    "width": 294,
+    "height": 245
+  },
+  {
+    "name": "sign_cola",
+    "file": "sign_cola.webp",
+    "left": 370,
+    "top": 439,
+    "width": 265,
+    "height": 164
+  },
+  {
+    "name": "sign_shop",
+    "file": "sign_shop.webp",
+    "left": 610,
+    "top": 439,
+    "width": 259,
+    "height": 170
+  },
+  {
+    "name": "awning",
+    "file": "awning.webp",
+    "left": 146,
+    "top": 563,
+    "width": 764,
+    "height": 160
+  },
+  {
+    "name": "ground_floor",
+    "file": "ground_floor.webp",
+    "left": 160,
+    "top": 664,
+    "width": 729,
+    "height": 324
+  },
+  {
+    "name": "bicycle",
+    "file": "bicycle.webp",
+    "left": 579,
+    "top": 823,
+    "width": 243,
+    "height": 178
+  },
+  {
+    "name": "air_conditioner",
+    "file": "air_conditioner.webp",
+    "left": 259,
+    "top": 835,
+    "width": 163,
+    "height": 143
+  },
+  {
+    "name": "poster",
+    "file": "poster.webp",
+    "left": 182,
+    "top": 699,
+    "width": 104,
+    "height": 149
+  },
+  {
+    "name": "plants",
+    "file": "plants.webp",
+    "left": 77,
+    "top": 890,
+    "width": 220,
+    "height": 124
+  }
+]
