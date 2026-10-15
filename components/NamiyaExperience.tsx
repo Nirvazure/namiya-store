@@ -7,6 +7,7 @@ import { LetterPanel } from "@/components/letter/LetterPanel";
 import { ReplyPanel } from "@/components/letter/ReplyPanel";
 import { CompanionRuntime } from "@/components/companions/CompanionRuntime";
 import { FocusBookmark } from "@/components/companions/FocusBookmark";
+import { MusicDock } from "@/components/music/MusicDock";
 import { ExteriorScene } from "@/components/scene/ExteriorScene";
 import { IndoorScene } from "@/components/scene/IndoorScene";
 import { deliverPreparedLetter } from "@/services/letters/deliverLetter";
@@ -36,6 +37,7 @@ export function NamiyaExperience() {
   const sending = useRef(false);
   const hasReply = mailboxState === "hasReply" || flowState === "replyReady";
   const letterOpen = flowState === "letterWriting" || flowState === "characterSelecting" || flowState === "privacySelecting" || flowState === "replyReading";
+  const companionHidden = letterOpen || transitioning || flowState === "delivering" || (location === "inside" && conversationOpen);
 
   useEffect(() => { hydrateApp(); hydrateRecent(); }, [hydrateApp, hydrateRecent]);
   useEffect(() => useLetterStore.subscribe((state, previous) => {
@@ -117,7 +119,8 @@ export function NamiyaExperience() {
       {flowState === "delivering" && flight ? <DeliveryAnimation flight={flight} /> : null}
       {flowState === "replyReading" && reply ? <ReplyPanel onClose={() => useLetterStore.getState().resetLetter()} reply={reply} /> : null}
       <CompanionRuntime />
-      <FocusBookmark outside={location === "outside"} hidden={letterOpen || transitioning || flowState === "delivering" || (location === "inside" && conversationOpen)} />
+      <MusicDock outside={location === "outside"} hidden={companionHidden} />
+      <FocusBookmark outside={location === "outside"} hidden={companionHidden} />
     </main>
   );
 }

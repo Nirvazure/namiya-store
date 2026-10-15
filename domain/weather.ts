@@ -16,6 +16,7 @@ export type SceneEnvironment = {
   phaseLabel: string;
   weatherLabel: string;
   localTime: string;
+  localDate: string;
   timeSource: "当地时间" | "本地时间";
   placeName?: string;
   temperature?: number;
@@ -48,7 +49,7 @@ export function getSceneEnvironment(now: number, weather?: WeatherSnapshot): Sce
   const hour = new Date(now).getHours();
   const fallbackPhase: DayPhase = hour >= 5 && hour < 8 ? "morning" : hour >= 8 && hour < 17 ? "day" : hour >= 17 && hour < 19 ? "dusk" : "night";
   const clock = (timezone?: string) => new Intl.DateTimeFormat("zh-CN", { timeZone: timezone, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(now);
-  const fallback: SceneEnvironment = { phase: fallbackPhase, phaseLabel: phaseLabels[fallbackPhase], condition: "unknown", label: `${phaseLabels[fallbackPhase]} · 本地时间`, weatherLabel: "天气暂不可用", localTime: clock(), timeSource: "本地时间", live: false };
+  const fallback: SceneEnvironment = { phase: fallbackPhase, phaseLabel: phaseLabels[fallbackPhase], condition: "unknown", label: `${phaseLabels[fallbackPhase]} · 本地时间`, weatherLabel: "天气暂不可用", localTime: clock(), localDate: locationDate(now, Intl.DateTimeFormat().resolvedOptions().timeZone), timeSource: "本地时间", live: false };
   if (!weather || now - Math.min(weather.fetchedAt, weather.observedAt) >= WEATHER_MAX_AGE_MS) return fallback;
   const solar = weather.solarDays.find(day => day.date === locationDate(now, weather.timezone));
   if (!solar) return fallback;
@@ -59,5 +60,5 @@ export function getSceneEnvironment(now: number, weather?: WeatherSnapshot): Sce
   else if (sunrise === null || sunset === null) phase = weather.isDay ? "day" : "night";
   else phase = now >= sunrise && now < sunset ? "day" : "night";
   const condition = classifyWeather(weather.weatherCode);
-  return { phase, phaseLabel: phaseLabels[phase], condition: condition.condition, label: `${phaseLabels[phase]} · ${condition.label}`, weatherLabel: condition.label, localTime: clock(weather.timezone), timeSource: "当地时间", temperature: weather.temperature, live: true };
+  return { phase, phaseLabel: phaseLabels[phase], condition: condition.condition, label: `${phaseLabels[phase]} · ${condition.label}`, weatherLabel: condition.label, localTime: clock(weather.timezone), localDate: locationDate(now, weather.timezone), timeSource: "当地时间", temperature: weather.temperature, live: true };
 }

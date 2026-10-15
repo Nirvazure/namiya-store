@@ -8,6 +8,14 @@ export function fitEdgeNote(size: { width: number; height: number }, viewport: N
   };
 }
 
+/** Expand beside the collapsed timer while keeping both visible above bottom controls. */
+export function fitSideNote(anchor: NoteAnchor, size: { width: number; height: number }, viewport: NoteViewport, bottomClearance: number) {
+  return {
+    left: Math.max(viewport.left + 12, Math.min(anchor.left - size.width - 8, viewport.left + viewport.width - size.width - 12)),
+    top: Math.max(viewport.top + 12, Math.min(anchor.bottom - size.height, viewport.top + viewport.height - bottomClearance - size.height - 12)),
+  };
+}
+
 export function fitCompanionNote(anchor: NoteAnchor, size: { width: number; height: number }, viewport: NoteViewport) {
   const inset = 12;
   const minLeft = viewport.left + inset;

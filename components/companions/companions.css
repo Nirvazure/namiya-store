@@ -1,4 +1,4 @@
-.companion-spot, .exterior-companions, .companion-note, .focus-bookmark {
+.companion-spot, .companion-note, .focus-bookmark {
   --companion-ink: #4c493c;
   --companion-muted: #716851;
   --companion-rust: #925e42;
@@ -38,11 +38,11 @@
 .companion-note::before { content: ""; display: block; width: 26px; height: 3px; margin: 0 auto 2px; background: #bfaa8147; border-radius: 3px; }
 .companion-note-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .companion-note-heading strong { font: 400 17px/1.6 var(--font-reading); }
-.companion-note button, .exterior-companions button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-width: 44px; min-height: 44px; padding: 6px 8px; border: 0; background: transparent; font: inherit; color: inherit; cursor: pointer; }
+.companion-note button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-width: 44px; min-height: 44px; padding: 6px 8px; border: 0; background: transparent; font: inherit; color: inherit; cursor: pointer; }
 .companion-note-heading button { margin-right: -10px; color: var(--companion-muted); }
-.companion-note button:focus-visible, .companion-note input:focus-visible, .exterior-companions input:focus-visible { outline: 2px solid var(--companion-rust); outline-offset: 2px; }
-.companion-note button:hover, .exterior-companions button:hover { color: var(--companion-rust); }
-.companion-note button:disabled, .exterior-companions button:disabled { opacity: .55; cursor: wait; }
+.companion-note button:focus-visible, .companion-note input:focus-visible { outline: 2px solid var(--companion-rust); outline-offset: 2px; }
+.companion-note button:hover { color: var(--companion-rust); }
+.companion-note button:disabled { opacity: .55; cursor: wait; }
 .companion-note-intro { margin: 0 0 9px; color: var(--companion-muted); font: 13px/1.8 var(--font-reading); }
 .companion-track-list { border-top: 1px solid var(--companion-line); border-bottom: 1px solid var(--companion-line); }
 .companion-track-list button { display: flex; justify-content: flex-start; width: 100%; text-align: left; padding: 7px 0; }
@@ -58,50 +58,37 @@
 .companion-volume svg { flex-shrink: 0; color: var(--companion-muted); }
 .companion-error { flex: 0 0 100%; margin: 2px 0 0; font-size: 12px; color: #8c4030; line-height: 1.7; }
 .companion-focus-time { margin: 14px 0; color: var(--companion-ink); font: 400 26px/1.4 Georgia, serif; text-align: left; font-variant-numeric: tabular-nums; letter-spacing: .02em; }
-.companion-note-focus { box-shadow: -3px 3px 12px #46392314; padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
+.companion-note-focus { box-shadow: -3px 3px 12px #46392314; animation: companion-slide-in .18s ease-out; }
 .companion-note-focus::before { display: none; }
 .companion-focus-actions { display: flex; justify-content: space-between; gap: 8px; border-top: 1px solid var(--companion-line); }
 .companion-focus-actions button:first-child { color: var(--companion-rust); }
 .companion-focus-actions button:last-child { color: var(--companion-muted); }
 .companion-completed { margin: 5px 0 12px; font: 13px/1.8 var(--font-reading); text-align: center; color: var(--companion-muted); }
 
-.exterior-companions { position: absolute; z-index: 4; left: 5.5%; bottom: 23px; display: flex; align-items: center; gap: 30px; font-size: 13px; color: inherit; }
-.exterior-music { display: flex; align-items: center; gap: 6px; min-width: 0; }
-.exterior-track-title { max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.exterior-music .is-compact { flex-wrap: nowrap; gap: 0; }
-.exterior-music .companion-volume { width: 86px; gap: 5px; }
-.exterior-music .companion-volume svg { color: inherit; }
-.exterior-music .companion-error { position: absolute; bottom: 100%; left: 0; min-width: 210px; padding: 7px 10px; background: var(--companion-paper); border: 1px solid var(--companion-line); }
-.focus-bookmark { position: fixed; z-index: 21; right: 0; bottom: calc(76px + env(safe-area-inset-bottom, 0px)); display: flex; align-items: center; justify-content: center; gap: 4px; min-width: 44px; min-height: 44px; padding: 10px 12px; border: 0; border-left: 1px solid #aa947b66; border-radius: 3px 0 0 2px; background: #f2e6cde8; box-shadow: -2px 2px 7px #4436220e; cursor: pointer; font: 13px/1.7 var(--font-ui); }
+.companion-current-title { margin: 6px 0; font: 16px/1.6 var(--font-reading); }
+.focus-bookmark { position: fixed; z-index: 21; right: 0; bottom: 86px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; width: 68px; min-height: 60px; padding: 8px; border: 1px solid var(--companion-line); border-right: 0; border-radius: 4px 0 0 4px; background: var(--companion-paper); box-shadow: -2px 2px 6px #4436220a; cursor: pointer; font: 13px/1.5 var(--font-ui); transition: background .18s; }
 .focus-bookmark[data-location="inside"] { bottom: calc(108px + env(safe-area-inset-bottom, 0px)); }
-.focus-bookmark:hover, .focus-bookmark:focus-visible { background: #f9f0dd; }
-.focus-bookmark.focus-is-idle { width: 44px; padding: 14px 10px; }
-.focus-is-idle .focus-bookmark-text { writing-mode: vertical-rl; letter-spacing: .18em; }
-.focus-bookmark-text { font-variant-numeric: tabular-nums; }
-.focus-bookmark:not(.focus-is-idle) { flex-direction: column; min-width: 66px; gap: 0; padding: 7px 10px 9px; }
-.focus-bookmark small { font-size: 10px; line-height: 1.3; color: var(--companion-muted); }
-.focus-bookmark-progress { display: block; width: 100%; height: 1px; margin-top: 5px; background: #b7a17e55; }
-.focus-bookmark-progress i { display: block; height: 100%; background: #98704f; }
-[data-phase="night"] .exterior-companions { --companion-rust: #e0b18f; }
+.focus-bookmark:hover, .focus-bookmark[aria-expanded="true"] { background: #eee1c8; }
+.focus-bookmark:focus-visible { outline: 2px solid var(--companion-rust); outline-offset: -3px; }
+.focus-bookmark.focus-is-idle { width: 52px; gap: 4px; }
+.focus-bookmark-text { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.focus-is-running .focus-bookmark-text, .focus-is-paused .focus-bookmark-text { font: 17px/1.3 Georgia, serif; }
+.focus-bookmark small { font-size: 11px; line-height: 1.4; color: var(--companion-muted); }
+.focus-bookmark-progress { display: block; width: 100%; height: 2px; margin-top: 4px; background: var(--companion-line); }
+.focus-bookmark-progress i { display: block; width: 100%; height: 100%; background: var(--companion-rust); transform-origin: left; }
+@keyframes companion-slide-in { from { opacity: 0; transform: translateX(8px); } to { opacity: 1; transform: translateX(0); } }
 @media (max-width: 700px) {
   .companion-spot { min-width: 44px; }
   .companion-object-caption { font-size: 11px; padding: 1px 0; opacity: 1; }
   .companion-small-status { top: calc(100% + 21px); font-size: 12px; }
   .indoor-panel-grandpa .indoor-writing-hotspot { top: 92%; left: 39%; }
   .indoor-panel-matcha .indoor-menu-hotspot { left: 30%; top: 73%; }
-  .exterior-companions { left: 8%; right: 8%; bottom: 19px; gap: 6px 16px; justify-content: space-between; flex-wrap: wrap; font-size: 12px; }
-  .exterior-track-title { max-width: 100px; }
-  .exterior-music { gap: 0; }
-  .exterior-music .companion-volume { width: 62px; min-width: 62px; }
-  .exterior-music .companion-volume svg { display: none; }
+  .focus-bookmark { bottom: calc(var(--music-dock-height) + 16px); }
+  .focus-bookmark[data-location="inside"] { bottom: calc(var(--music-dock-height) + 100px); }
   .companion-note { font-size: 13px; }
 }
-@media (max-width: 420px) {
-  .exterior-companions { gap: 0 12px; }
-  .exterior-track-title { max-width: 76px; }
-  .exterior-music .companion-volume { width: 46px; min-width: 46px; }
-}
 @media (prefers-reduced-motion: reduce) {
-  .companion-object-art, .companion-object-caption { transition: none; }
+  .companion-object-art, .companion-object-caption, .focus-bookmark { transition: none; }
+  .companion-note-focus { animation: none; }
   .object-is-playing .companion-record { animation: none; }
 }

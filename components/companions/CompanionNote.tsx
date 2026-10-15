@@ -7,7 +7,8 @@ import { companionTriggerId, type CompanionOwner, type CompanionTool } from "@/d
 import { MusicPanel } from "@/components/music/MusicPanel";
 import { PomodoroPanel } from "@/components/pomodoro/PomodoroPanel";
 import { useCompanionStore } from "@/store/useCompanionStore";
-import { fitCompanionNote, fitEdgeNote, watchCompanionNote } from "@/services/scene/companionNote";
+import { fitCompanionNote, fitSideNote, watchCompanionNote } from "@/services/scene/companionNote";
+import { MusicDetails } from "@/components/music/MusicControls";
 
 export function CompanionNote({ owner, tool, label, edgeClearance = 76, returnFocusId }: { owner: CompanionOwner; tool: CompanionTool; label: string; edgeClearance?: number; returnFocusId?: string }) {
   const box = useRef<HTMLDivElement>(null);
@@ -22,12 +23,18 @@ export function CompanionNote({ owner, tool, label, edgeClearance = 76, returnFo
       const viewport = window.visualViewport;
       const view = { left: viewport?.offsetLeft ?? 0, top: viewport?.offsetTop ?? 0, width: viewport?.width ?? window.innerWidth, height: viewport?.height ?? window.innerHeight };
       const edge = tool === "focus";
-      const clearance = edge ? Math.min(edgeClearance, view.height / 3) : 0;
-      note.style.width = `${Math.min(edge ? 240 : 272, view.width - 24)}px`;
+      const sideTrigger = edge ? document.getElementById(companionTriggerId("bookmark", "focus")) : null;
+      const anchor = (sideTrigger ?? trigger).getBoundingClientRect();
+      const dock = document.querySelector<HTMLElement>(".music-dock")?.getBoundingClientRect();
+      const footer = document.querySelector<HTMLElement>(".indoor-is-active .indoor-footer")?.getBoundingClientRect();
+      const bottomControls = [dock, footer].filter(rect => rect && rect.height > 0);
+      const controlTop = Math.min(view.top + view.height, ...bottomControls.map(rect => rect!.top));
+      const clearance = Math.min(Math.max(edge ? edgeClearance : 0, view.top + view.height - controlTop), Math.max(0, view.height - 140));
+      const availableWidth = sideTrigger ? anchor.left - view.left - 20 : view.width - 24;
+      note.style.width = `${Math.min(edge ? 240 : 272, edge ? availableWidth : view.width - 24)}px`;
       note.style.maxHeight = `${view.height - clearance - 24}px`;
-      const anchor = trigger.getBoundingClientRect();
       const bounds = note.getBoundingClientRect();
-      const position = edge ? fitEdgeNote(bounds, view, clearance) : fitCompanionNote(anchor, bounds, view);
+      const position = edge ? fitSideNote(anchor, bounds, view, clearance) : fitCompanionNote(anchor, bounds, { ...view, height: view.height - clearance });
       note.style.left = `${position.left}px`;
       note.style.top = `${position.top}px`;
       note.style.visibility = "visible";
@@ -62,6 +69,6 @@ export function CompanionNote({ owner, tool, label, edgeClearance = 76, returnFo
     if (event.relatedTarget instanceof Node && !event.currentTarget.contains(event.relatedTarget) && event.relatedTarget !== document.getElementById(triggerId) && !(tool === "focus" && event.relatedTarget === document.getElementById(companionTriggerId("bookmark", "focus")))) useCompanionStore.getState().close();
   }}>
     <div className="companion-note-heading"><strong id={`${triggerId}-title`}>{label}</strong><button type="button" aria-label="收起控制" onClick={() => useCompanionStore.getState().close()}><X size={16} aria-hidden="true" /></button></div>
-    {tool === "music" && owner !== "outside" && owner !== "bookmark" ? <MusicPanel counter={owner} /> : <PomodoroPanel />}
+    {tool === "music" ? owner !== "outside" && owner !== "bookmark" ? <MusicPanel counter={owner} /> : <MusicDetails /> : <PomodoroPanel />}
   </div>, document.body);
 }

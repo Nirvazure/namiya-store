@@ -17,7 +17,7 @@ button { cursor: pointer; }
 button:disabled { cursor: wait; }
 button:focus-visible, a:focus-visible { outline: 2px solid #9c553d; outline-offset: 5px; }
 ::selection { color: #263c32; background: #d3c9a5; }
-.namiya-world { --ink: #35433b; --paper: #f1e9d9; --rust: #9a4734; color: var(--ink); font-family: var(--font-reading); }
+.namiya-world { --ink: #35433b; --paper: #f1e9d9; --rust: #9a4734; --music-dock-height: calc(64px + env(safe-area-inset-bottom, 0px)); color: var(--ink); font-family: var(--font-reading); }
 .namiya-world :is(h2, h3) { font-family: var(--font-reading); font-weight: 500; letter-spacing: .045em; }
 .namiya-world button, .namiya-world select { font-family: var(--font-ui); }
 .scene-header-actions, .scene-salutation, .scene-write-link, .mailbox-state-label, .scene-corner-note, .scene-entry-status, .scene-delivery-status, .ready-letter button, .shop-entry-door > span { font-family: var(--font-ui); }
@@ -56,6 +56,8 @@ button:focus-visible, a:focus-visible { outline: 2px solid #9c553d; outline-offs
 .scene-temperature small { margin-left: 3px; font-size: 17px; }
 .scene-local-time { margin: 0; font: 13px/1.8 var(--font-ui); opacity: .85; }
 .scene-local-time time { font-variant-numeric: tabular-nums; }
+.scene-calendar-placement { margin-top: 18px; }
+.letter-is-ready .scene-calendar-placement, .is-delivering .scene-calendar-placement { display: none; }
 .scene-reply-reminder { margin: 24px 0 0; font: 14px/1.8 var(--font-reading); }
 .scene-introduction .scene-write-link { margin-top: 21px; }
 .scene-reply-reminder + .scene-write-link { margin-top: 8px; }
@@ -63,7 +65,7 @@ button:focus-visible, a:focus-visible { outline: 2px solid #9c553d; outline-offs
 .scene-data-credit a { color: inherit; text-decoration: none; }
 .scene-data-credit a:hover { text-decoration: underline; }
 .scene-write-link { display: inline-flex; align-items: center; gap: 20px; min-height: 44px; font-size: 14px; padding: 7px 0 9px; border-bottom: 1px solid #75806d75; }
-.scene-write-link svg { transition: transform .25s; }
+.scene-write-link svg { flex-shrink: 0; transition: transform .25s; }
 .scene-write-link:hover svg { transform: translateX(5px); }
 .distant-shop { position: absolute; z-index: -1; opacity: .075; filter: sepia(.6) blur(2px); pointer-events: none; }
 .distant-shop-left { left: -12%; bottom: 14%; width: 38vw; height: 38vw; transform: rotate(-2deg); }
@@ -172,7 +174,8 @@ button:focus-visible, a:focus-visible { outline: 2px solid #9c553d; outline-offs
   .store-brand small { font-size: 10px; }
   .scene-header-actions { gap: 0; }
   .user-center-entry { font-size: 12px; gap: 5px; max-width: 115px; }
-  .scene-introduction { top: 14%; left: 8%; width: 72%; max-width: 380px; }
+  .scene-introduction { top: 14%; left: 8%; width: 84%; max-width: 420px; }
+  .scene-calendar-placement { margin-top: 12px; }
   .scene-salutation { font-size: 12px; margin-bottom: 10px; }
   .scene-introduction .scene-place-name { font-size: 25px; line-height: 1.5; }
   .scene-weather-reading { font-size: 17px; margin-top: 8px; gap: 16px; }

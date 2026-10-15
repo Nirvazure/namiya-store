@@ -2,11 +2,9 @@
 
 import type { CounterId } from "@/domain/indoor";
 import { companionTriggerId, counterCompanions, type CompanionTool } from "@/domain/companions";
-import { musicTracks } from "@/domain/musicTracks";
 import { CompanionObject } from "@/components/companions/CompanionObject";
 import { CompanionArtwork } from "@/components/companions/CompanionArtwork";
 import { CompanionNote } from "@/components/companions/CompanionNote";
-import { MusicControls } from "@/components/music/MusicPanel";
 import { useCompanionStore } from "@/store/useCompanionStore";
 import { useMusicStore } from "@/store/useMusicStore";
 import { usePomodoroStore } from "@/store/usePomodoroStore";
@@ -37,12 +35,4 @@ export function IndoorCompanions({ counter }: { counter: CounterId }) {
       </div>;
     })}
   </>;
-}
-
-export function ExteriorCompanions() {
-  const trackId = useMusicStore(state => state.trackId);
-  const track = musicTracks.find(track => track.id === trackId);
-  return <div className="exterior-companions" aria-label="街角的声音" data-companion-interactive>
-    <div className="exterior-music"><span className="exterior-track-title" title={track?.title}>{track?.title}</span><MusicControls compact /></div>
-  </div>;
 }
