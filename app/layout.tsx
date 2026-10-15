@@ -22,9 +22,27 @@ const brush = localFont({
   adjustFontFallback: false,
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
+  || (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "http://localhost:3000");
+const siteTitle = "解忧杂货店";
+const siteDescription = "沿着水彩旧街走进解忧杂货店，在一盏暖灯下写信，安放今晚的心事。";
+
 export const metadata: Metadata = {
-  title: "解忧杂货店",
-  description: "沿着水彩旧街走进解忧杂货店，在一盏暖灯下写信，安放今晚的心事。",
+  metadataBase: new URL(siteUrl),
+  title: siteTitle,
+  description: siteDescription,
+  openGraph: {
+    type: "website",
+    locale: "zh_CN",
+    siteName: siteTitle,
+    title: siteTitle,
+    description: siteDescription,
+  },
+  twitter: {
+    card: "summary",
+    title: siteTitle,
+    description: siteDescription,
+  },
 };
 
 export default function RootLayout({

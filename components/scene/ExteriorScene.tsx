@@ -90,7 +90,7 @@ export function ExteriorScene({ flowState, hasReply, error, onOpenMailbox, onEdi
       </div>
 
       <header className="scene-header">
-        <a className="store-brand" href="#street" aria-label="解忧杂货店"><span className="brand-mark">解</span><span>解忧杂货店<small lang="en">Namiya General Store</small></span></a>
+        <a className="store-brand" href="#street" aria-label="解忧杂货店"><Image className="store-brand-icon" src="/site-logo.png" alt="" width={48} height={56} preload /><span>解忧杂货店<small lang="en">Namiya General Store</small></span></a>
         <div className="scene-header-actions">
           <UserCenterEntry {...userCenter} />
         </div>
