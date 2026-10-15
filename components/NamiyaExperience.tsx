@@ -5,17 +5,15 @@ import { gsap } from "gsap";
 import { DeliveryAnimation, type MailFlight } from "@/components/letter/DeliveryAnimation";
 import { LetterPanel } from "@/components/letter/LetterPanel";
 import { ReplyPanel } from "@/components/letter/ReplyPanel";
-import { MusicPanel } from "@/components/music/MusicPanel";
-import { PomodoroPanel } from "@/components/pomodoro/PomodoroPanel";
+import { CompanionRuntime } from "@/components/companions/CompanionRuntime";
+import { FocusBookmark } from "@/components/companions/FocusBookmark";
 import { ExteriorScene } from "@/components/scene/ExteriorScene";
 import { IndoorScene } from "@/components/scene/IndoorScene";
-import { StatusBar } from "@/components/status/StatusBar";
 import { deliverPreparedLetter } from "@/services/letters/deliverLetter";
 import { preloadIndoorEntry } from "@/services/scene/preloadIndoor";
 import { useAppStore } from "@/store/useAppStore";
 import { useLetterStore } from "@/store/useLetterStore";
-import { useMusicStore } from "@/store/useMusicStore";
-import { usePomodoroStore } from "@/store/usePomodoroStore";
+import { useCompanionStore } from "@/store/useCompanionStore";
 
 export function NamiyaExperience() {
   const hydrateApp = useAppStore(state => state.hydrate);
@@ -24,13 +22,12 @@ export function NamiyaExperience() {
   const reply = useLetterStore(state => state.reply);
   const error = useLetterStore(state => state.error);
   const hydrateRecent = useLetterStore(state => state.hydrateRecent);
-  const toggleMusic = useMusicStore(state => state.togglePanel);
-  const togglePomodoro = usePomodoroStore(state => state.togglePanel);
   const [flight, setFlight] = useState<MailFlight>();
   const [location, setLocation] = useState<"outside" | "inside">("outside");
   const [hasEntered, setHasEntered] = useState(false);
   const [transitioning, setTransitioning] = useState(false);
   const [entryError, setEntryError] = useState<string>();
+  const [conversationOpen, setConversationOpen] = useState(false);
   const transitionLock = useRef(false);
   const focusAfterTransition = useRef(false);
   const transitionLayer = useRef<HTMLDivElement>(null);
@@ -41,6 +38,9 @@ export function NamiyaExperience() {
   const letterOpen = flowState === "letterWriting" || flowState === "characterSelecting" || flowState === "privacySelecting" || flowState === "replyReading";
 
   useEffect(() => { hydrateApp(); hydrateRecent(); }, [hydrateApp, hydrateRecent]);
+  useEffect(() => useLetterStore.subscribe((state, previous) => {
+    if (state.flowState !== previous.flowState) useCompanionStore.getState().close();
+  }), []);
   useEffect(() => {
     alive.current = true;
     return () => { alive.current = false; transitionTimeline.current?.kill(); };
@@ -56,6 +56,7 @@ export function NamiyaExperience() {
 
   async function changeScene(next: "outside" | "inside") {
     if (transitionLock.current || next === location || letterOpen || flowState === "delivering") return;
+    useCompanionStore.getState().close();
     transitionLock.current = true;
     focusAfterTransition.current = true;
     setTransitioning(true);
@@ -106,16 +107,17 @@ export function NamiyaExperience() {
   return (
     <main className="namiya-world" id="street">
       <div className="scene-layer" hidden={location !== "outside"} inert={location !== "outside" || transitioning || letterOpen}>
-        <ExteriorScene flowState={flowState} hasReply={hasReply} error={error} onOpenMailbox={openMailbox} onEditLetter={() => useLetterStore.getState().openLetter()} onMusic={toggleMusic} onPomodoro={togglePomodoro} onEnter={() => void changeScene("inside")} onPrepareEntry={() => { void preloadIndoorEntry().catch(() => {}); }} entering={transitioning} entryError={entryError} />
+        <ExteriorScene flowState={flowState} hasReply={hasReply} error={error} onOpenMailbox={openMailbox} onEditLetter={() => useLetterStore.getState().openLetter()} onEnter={() => void changeScene("inside")} onPrepareEntry={() => { void preloadIndoorEntry().catch(() => {}); }} entering={transitioning} entryError={entryError} />
       </div>
       {hasEntered ? <div className="scene-layer" hidden={location !== "inside"} inert={location !== "inside" || transitioning || letterOpen}>
-        <IndoorScene active={location === "inside"} blocked={letterOpen || transitioning} envelopeReady={flowState === "envelopeReady"} onExit={() => void changeScene("outside")} onWrite={() => { useLetterStore.getState().setSelectedCharacter("grandpa"); useLetterStore.getState().openLetter(); }} onEditLetter={() => useLetterStore.getState().openLetter()} onMusic={toggleMusic} onPomodoro={togglePomodoro} />
+        <IndoorScene active={location === "inside"} blocked={letterOpen || transitioning} envelopeReady={flowState === "envelopeReady"} onExit={() => void changeScene("outside")} onWrite={() => { useLetterStore.getState().setSelectedCharacter("grandpa"); useLetterStore.getState().openLetter(); }} onEditLetter={() => useLetterStore.getState().openLetter()} onConversationChange={setConversationOpen} />
       </div> : null}
       <div className={`scene-transition ${transitioning ? "is-busy" : ""}`} ref={transitionLayer} aria-hidden="true" />
       <LetterPanel />
       {flowState === "delivering" && flight ? <DeliveryAnimation flight={flight} /> : null}
       {flowState === "replyReading" && reply ? <ReplyPanel onClose={() => useLetterStore.getState().resetLetter()} reply={reply} /> : null}
-      <MusicPanel /><PomodoroPanel /><StatusBar />
+      <CompanionRuntime />
+      <FocusBookmark outside={location === "outside"} hidden={letterOpen || transitioning || flowState === "delivering" || (location === "inside" && conversationOpen)} />
     </main>
   );
 }

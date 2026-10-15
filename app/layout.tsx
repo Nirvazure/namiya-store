@@ -1,15 +1,25 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
+import "./book-font.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+const book = localFont({
+  src: [
+    { path: "../public/fonts/namiya-book-regular.woff2", weight: "400", style: "normal" },
+    { path: "../public/fonts/namiya-book-medium.woff2", weight: "500", style: "normal" },
+  ],
+  variable: "--font-book",
+  display: "swap",
+  adjustFontFallback: false,
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+const brush = localFont({
+  src: "../public/fonts/namiya-brush.woff2",
+  variable: "--font-brush",
+  weight: "400",
+  style: "normal",
+  display: "swap",
+  adjustFontFallback: false,
 });
 
 export const metadata: Metadata = {
@@ -25,7 +35,7 @@ export default function RootLayout({
   return (
     <html
       lang="zh-CN"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${book.variable} ${brush.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>

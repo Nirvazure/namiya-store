@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "test": "node --import ./tests/register.mjs --test tests/*.test.mjs",
+    "test:browser": "node tests/browser-weather.mjs",
+    "test:browser:indoor": "node tests/browser-indoor.mjs",
     "prepare:scene": "node scripts/prepare-scene.mjs",
     "prepare:indoor": "node scripts/prepare-indoor.mjs",
     "dev": "next dev",

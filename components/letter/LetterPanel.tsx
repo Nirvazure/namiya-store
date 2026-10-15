@@ -103,7 +103,7 @@ function LetterDesk() {
               <div className="letter-sheet__content">
                 <div className="letter-sheet__masthead">
                   <span className="letter-sheet__mark" aria-hidden="true">浪矢</span>
-                  <span>心事便笺<br /><span lang="en">NAMIYA GENERAL STORE</span></span>
+                  <span>心事便笺<br /><span lang="en">Namiya General Store</span></span>
                 </div>
                 <h2 id={titleId} className="letter-sheet__salutation">亲爱的{recipient?.name ?? "杂货店爷爷"}：</h2>
                 <label className="letter-sheet__title">

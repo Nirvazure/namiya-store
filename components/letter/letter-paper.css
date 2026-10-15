@@ -11,7 +11,7 @@
   color: #e8dac0;
   background: radial-gradient(ellipse at 34% 25%, #846b49 0, #5b4a36 35%, #302a23 78%);
   box-shadow: inset 0 0 160px #171a1c70;
-  font-family: "Songti SC", "Noto Serif CJK SC", "STSong", "SimSun", serif;
+  font-family: var(--font-reading);
   outline: none;
 }
 .namiya-writing-desk::before {
@@ -24,9 +24,9 @@
 }
 .namiya-writing-desk__light { position: absolute; top: -55vh; left: -20vw; width: 115vw; height: 130vh; pointer-events: none; background: radial-gradient(ellipse, #ffe5a929, transparent 64%); }
 .namiya-writing-desk__toolbar { position: relative; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 22px 40px; border-bottom: 1px solid #d7c69b15; }
-.namiya-writing-desk__eyebrow { font-size: 12px; letter-spacing: .18em; color: #d6c8af; }
+.namiya-writing-desk__eyebrow { font-family: var(--font-ui); font-size: 13px; letter-spacing: .015em; color: #e1d4bc; }
 .namiya-writing-desk__eyebrow > span { margin: 0 15px; opacity: .45; }
-.namiya-writing-desk__close { min-height: 44px; border: 0; padding: 4px 0 4px 15px; background: transparent; color: #e4d5bc; font: inherit; font-size: 12px; cursor: pointer; }
+.namiya-writing-desk__close { min-height: 44px; border: 0; padding: 4px 0 4px 15px; background: transparent; color: #e4d5bc; font-family: var(--font-ui); font-size: 13px; cursor: pointer; }
 .namiya-writing-desk__close > span { display: inline-block; margin-left: 18px; font-family: sans-serif; font-size: 24px; vertical-align: -2px; }
 .namiya-writing-desk__scroll { position: relative; flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; scrollbar-color: #b6a27e55 transparent; scrollbar-width: thin; }
 .namiya-writing-desk__workspace { position: relative; width: min(100% - 80px, 680px); margin: 32px auto 64px; }
@@ -40,14 +40,14 @@
 .letter-sheet__crease--top { top: 33.333%; transform: rotate(-.15deg); }
 .letter-sheet__crease--bottom { top: 66.666%; transform: rotate(.12deg); }
 .letter-sheet__content { position: relative; z-index: 1; }
-.letter-sheet__masthead { display: flex; justify-content: space-between; align-items: center; margin-bottom: 36px; color: #968564; font-size: 11px; letter-spacing: .16em; line-height: 1.9; text-align: right; }
-.letter-sheet__masthead [lang="en"] { font-family: Georgia, serif; font-size: 8px; letter-spacing: .14em; }
+.letter-sheet__masthead { display: flex; justify-content: space-between; align-items: center; margin-bottom: 36px; color: #7b694c; font-size: 13px; letter-spacing: .015em; line-height: 1.9; text-align: right; }
+.letter-sheet__masthead [lang="en"] { font-family: Georgia, serif; font-size: 10px; font-style: italic; letter-spacing: .025em; }
 .letter-sheet__mark { display: inline-flex; align-items: center; justify-content: center; width: 37px; height: 37px; border: 1px solid #a5594773; color: #9d6350; font-size: 14px; letter-spacing: .05em; transform: rotate(-5deg); }
-.letter-sheet__salutation { margin: 0 0 22px; font-size: 18px; line-height: 1.8; font-weight: 400; letter-spacing: .08em; }
+.letter-sheet__salutation { margin: 0 0 22px; font-family: var(--font-reading); font-size: 23px; line-height: 1.6; font-weight: 500; letter-spacing: .045em; }
 .letter-sheet__title { display: block; margin-bottom: 17px; }
 .letter-sheet__title input { width: 100%; padding: 0 0 8px; background: transparent; border: 0; border-bottom: 1px solid #ac987e35; outline: none; color: var(--ink); font-family: inherit; font-size: 13px; line-height: 26px; letter-spacing: .06em; }
 .letter-sheet__title input::placeholder { color: #aa9b7d; }
-.letter-sheet__body { display: block; box-sizing: border-box; width: 100%; min-height: calc(var(--rule) * 9); overflow: hidden; resize: none; border: 0; border-radius: 0; padding: 0 0 1px; margin: 0; outline: none; color: #4a4a40; caret-color: #9d5039; background: repeating-linear-gradient(to bottom, transparent 0, transparent calc(var(--rule) - 1px), #9f8b663b calc(var(--rule) - 1px), #9f8b663b var(--rule)); font-family: inherit; font-size: 16px; font-weight: 400; line-height: var(--rule); letter-spacing: .08em; overflow-wrap: anywhere; }
+.letter-sheet__body { display: block; box-sizing: border-box; width: 100%; min-height: calc(var(--rule) * 9); overflow: hidden; resize: none; border: 0; border-radius: 0; padding: 0 0 1px; margin: 0; outline: none; color: #4a4a40; caret-color: #9d5039; background: repeating-linear-gradient(to bottom, transparent 0, transparent calc(var(--rule) - 1px), #9f8b663b calc(var(--rule) - 1px), #9f8b663b var(--rule)); font-family: inherit; font-size: 16px; font-weight: 400; line-height: var(--rule); letter-spacing: .025em; overflow-wrap: anywhere; }
 .letter-sheet__body::placeholder { color: #9b8e75; opacity: .78; }
 .letter-sheet__body:disabled, .letter-sheet__title input:disabled { opacity: 1; -webkit-text-fill-color: #514b3c; }
 .letter-sheet__signature { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin-top: 32px; color: #9b896b; font-size: 11px; line-height: 1.9; letter-spacing: .08em; }
@@ -55,7 +55,7 @@
 .namiya-writing-desk__pencil { position: absolute; z-index: 2; top: 220px; right: -65px; width: 9px; height: 290px; pointer-events: none; transform: rotate(12deg); background: linear-gradient(90deg, #5c3821, #ad7e45 25%, #d4a969 45%, #997141 65%, #62462b); box-shadow: 7px 9px 8px #1f18083d; border-radius: 2px 2px 0 0; }
 .namiya-writing-desk__pencil::after { position: absolute; top: 100%; left: 0; width: 9px; height: 30px; background: linear-gradient(#bea279 0 70%, #34352e 70%); clip-path: polygon(0 0, 100% 0, 50% 100%); content: ""; }
 .namiya-writing-desk__below { padding: 27px 2px 0; }
-.namiya-writing-desk__settings { font-family: sans-serif; font-size: 11px; color: #ccbda2; }
+.namiya-writing-desk__settings { font-family: var(--font-ui); font-size: 13px; color: #dfd0b7; }
 .namiya-writing-desk__settings > summary { min-height: 38px; padding: 7px 0; cursor: pointer; list-style: none; letter-spacing: .05em; }
 .namiya-writing-desk__settings > summary::-webkit-details-marker { display: none; }
 .namiya-writing-desk__settings > summary > span { display: inline-block; margin-left: 15px; border-bottom: 1px solid #d8c4a05e; padding-bottom: 2px; color: #e3d5bd; }
@@ -95,16 +95,16 @@
 @media (max-width: 640px) {
   .namiya-writing-desk { --rule: 32px; }
   .namiya-writing-desk__toolbar { padding: 9px 18px; }
-  .namiya-writing-desk__eyebrow { font-size: 10px; letter-spacing: .05em; }
+  .namiya-writing-desk__eyebrow { font-size: 12px; letter-spacing: 0; }
   .namiya-writing-desk__eyebrow > span { margin: 0 7px; }
-  .namiya-writing-desk__close { font-size: 11px; }
+  .namiya-writing-desk__close { font-size: 12px; }
   .namiya-writing-desk__close > span { margin-left: 8px; }
   .namiya-writing-desk__workspace { width: calc(100% - 34px); margin-top: 22px; margin-bottom: 35px; }
   .letter-sheet { min-height: 565px; padding: 28px 25px 25px; }
   .letter-sheet__masthead { margin-bottom: 28px; }
-  .letter-sheet__salutation { margin-bottom: 18px; font-size: 16px; }
-  .letter-sheet__body { font-size: 15px; }
-  .letter-sheet__signature { font-size: 9px; letter-spacing: 0; }
+  .letter-sheet__salutation { margin-bottom: 18px; font-size: 21px; }
+  .letter-sheet__body { font-size: 16px; }
+  .letter-sheet__signature { font-size: 11px; letter-spacing: 0; }
   .namiya-writing-desk__pencil { display: none; }
   .namiya-writing-desk__actions { align-items: stretch; flex-direction: column; gap: 15px; }
   .namiya-writing-desk__fold-button { justify-content: center; }

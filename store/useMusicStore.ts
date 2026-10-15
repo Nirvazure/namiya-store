@@ -7,10 +7,8 @@ type MusicStore = {
   trackId: string;
   isPlaying: boolean;
   volume: number;
-  panelOpen: boolean;
-  togglePanel: () => void;
-  setTrack: (trackId: string) => void;
-  togglePlaying: () => void;
+  starting: boolean;
+  error: string;
   setVolume: (volume: number) => void;
 };
 
@@ -18,9 +16,7 @@ export const useMusicStore = create<MusicStore>((set) => ({
   trackId: musicTracks[0].id,
   isPlaying: false,
   volume: 0.6,
-  panelOpen: false,
-  togglePanel: () => set((state) => ({ panelOpen: !state.panelOpen })),
-  setTrack: (trackId) => set({ trackId }),
-  togglePlaying: () => set((state) => ({ isPlaying: !state.isPlaying })),
-  setVolume: (volume) => set({ volume }),
+  starting: false,
+  error: "",
+  setVolume: (volume) => set({ volume: Math.max(0, Math.min(1, volume)) }),
 }));

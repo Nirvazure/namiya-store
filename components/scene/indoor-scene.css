@@ -11,34 +11,33 @@
   overflow: hidden;
   color: var(--indoor-ink);
   background: var(--indoor-paper);
-  font-family: var(--font-serif), "Noto Serif SC", "Songti SC", SimSun, serif;
+  font-family: var(--font-reading);
   isolation: isolate;
   outline: none;
 }
 .indoor-scene.indoor-is-active { display: block; }
 .indoor-scene.indoor-has-envelope { --indoor-envelope-space: 58px; }
-.indoor-scene button { font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.indoor-scene button { font: inherit; font-family: var(--font-ui); cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .indoor-scene button:disabled { cursor: wait; }
 .indoor-scene button:focus-visible { outline: 2px solid var(--indoor-rust); outline-offset: 5px; }
 .indoor-paper { position: absolute; inset: 0; z-index: -1; pointer-events: none; background: radial-gradient(ellipse at 50% 39%, #fffcf063, transparent 65%), repeating-linear-gradient(13deg, #80653303 0 1px, transparent 1px 4px), repeating-linear-gradient(95deg, #80653304 0 1px, transparent 1px 5px); }
 .indoor-content { height: 100%; display: flex; flex-direction: column; }
 .indoor-header { position: relative; z-index: 20; height: 88px; flex-shrink: 0; padding: 0 4vw; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
-.indoor-back { display: flex; align-items: center; gap: 9px; padding: 10px 0; border: 0; background: none; color: var(--indoor-ink); font-size: 13px !important; letter-spacing: .06em; }
+.indoor-back { display: flex; align-items: center; gap: 9px; padding: 10px 0; border: 0; background: none; color: var(--indoor-ink); font-family: var(--font-ui); font-size: 13px !important; letter-spacing: 0; }
 .indoor-back svg { transition: transform .2s ease; }
 .indoor-back:hover svg { transform: translateX(-4px); }
-.indoor-wordmark { display: flex; align-items: center; gap: 16px; font-weight: 600; font-size: 17px; letter-spacing: .18em; }
-.indoor-wordmark span { border-left: 1px solid #bfb19b; padding-left: 16px; font-size: 11px; font-weight: 400; color: var(--indoor-muted); letter-spacing: .2em; }
-.indoor-tools { display: flex; gap: 14px; }
-.indoor-tools button { display: grid; place-items: center; width: 35px; height: 35px; border-radius: 50%; border: 1px solid #9e856827; color: var(--indoor-ink); background: #fff5; transition: background .2s ease; }
-.indoor-tools button:hover { background: #fff9; }
-.indoor-scroller { flex: 1; min-height: 0; display: flex; overflow-x: auto; overflow-y: hidden; overscroll-behavior: contain; scrollbar-width: none; touch-action: pan-x; }
+.indoor-wordmark { display: flex; align-items: center; gap: 16px; font-family: var(--font-display); font-weight: 400; font-synthesis: none; font-size: 26px; letter-spacing: .025em; }
+.indoor-wordmark span { border-left: 1px solid #bfb19b; padding-left: 16px; font-family: var(--font-ui); font-size: 12px; font-weight: 400; color: var(--indoor-muted); letter-spacing: 0; }
+.indoor-header .indoor-wordmark { position: absolute; left: 50%; transform: translateX(-50%); margin: 0; pointer-events: none; }
+.indoor-scroller { flex: 1; min-height: 0; display: flex; overflow-x: hidden; overflow-y: hidden; overscroll-behavior: contain; scrollbar-width: none; scroll-behavior: auto; touch-action: pan-y pinch-zoom; }
 .indoor-scroller::-webkit-scrollbar { display: none; }
 .indoor-scroller.indoor-scroll-paused { overflow-x: hidden; touch-action: none; }
 .indoor-panel { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 19px; flex: 0 0 100%; min-width: 0; overflow: hidden; padding: 12px 0 14px; }
 .indoor-panel-caption { position: relative; width: min(78vw, calc((100svh - 300px - var(--indoor-envelope-space)) * 1.3333)); flex-shrink: 0; z-index: 8; pointer-events: none; }
-.indoor-eyebrow { display: block; color: var(--indoor-muted); font-size: 10px; letter-spacing: .2em; }
-.indoor-panel-caption h2 { margin: 12px 0 9px; font-weight: 400; font-size: clamp(19px, 2vw, 30px); line-height: 1.5; letter-spacing: .1em; text-shadow: 0 1px 10px #f4ecd9; }
-.indoor-panel-caption p { margin: 0; color: var(--indoor-muted); font-size: 12px; letter-spacing: .08em; }
+.indoor-eyebrow { display: block; color: var(--indoor-muted); font-family: var(--font-ui); font-size: 12px; letter-spacing: .015em; }
+.namiya-world .indoor-panel-caption h2 { margin: 12px 0 9px; font-family: var(--font-display); font-weight: 400; font-synthesis: none; font-size: clamp(23px, 2vw, 32px); line-height: 1.6; letter-spacing: .025em; }
+.indoor-panel-caption p { margin: 0; color: #6b5d4e; font-size: 15px; line-height: 1.8; letter-spacing: .015em; }
+.indoor-hotspot, .indoor-footer, .indoor-dialog-actions, .indoor-menu-items button { font-family: var(--font-ui); }
 .indoor-artboard { position: relative; flex-shrink: 0; width: min(78vw, calc((100svh - 300px - var(--indoor-envelope-space)) * 1.3333)); aspect-ratio: 4/3; margin: 0 auto; }
 .indoor-art-shadow { position: absolute; width: 70%; height: 6%; left: 15%; bottom: 1%; border-radius: 50%; filter: blur(15px); background: #6954372b; }
 .indoor-plane { position: absolute; inset: 0; pointer-events: none; will-change: transform; }
@@ -88,7 +87,7 @@
 .indoor-dialog-backdrop { position: absolute; inset: 0; z-index: 40; display: flex; justify-content: center; align-items: flex-end; padding: 30px 20px 112px; background: #3a302e33; backdrop-filter: blur(3px); }
 .indoor-dialog { position: relative; width: 430px; max-width: 94vw; max-height: 75svh; overflow: auto; overscroll-behavior: contain; padding: 29px 32px 27px; border: 1px solid #dac7a4; border-radius: 5px 15px 7px 12px; background: #fbf3e3; background-image: repeating-linear-gradient(11deg, #90764e04 0 1px, transparent 1px 4px); box-shadow: 0 12px 50px #3e2d2a20; outline: none; animation: indoor-note-in .3s ease-out; }
 .indoor-dialog-close { position: absolute; right: 15px; top: 15px; display: grid; place-items: center; width: 28px; height: 28px; border: 0; background: none; color: var(--indoor-muted); }
-.indoor-dialog h3 { margin: 12px 0 17px; font-size: 23px; letter-spacing: .12em; font-weight: 400; }
+.namiya-world .indoor-dialog h3 { margin: 12px 0 17px; font-family: var(--font-display); font-size: 25px; letter-spacing: .025em; font-weight: 400; font-synthesis: none; }
 .indoor-dialog-words { margin: 0; font-size: 15px; line-height: 2.15; color: #64513e; min-height: 66px; }
 .indoor-dialog-actions { display: flex; justify-content: space-between; margin-top: 20px; gap: 12px; }
 .indoor-dialog-actions button { display: flex; align-items: center; gap: 7px; background: none; border: 0; color: var(--indoor-rust); padding: 8px 0; font-size: 12px; }
@@ -105,23 +104,20 @@
 @keyframes indoor-note-in { from { transform: translateY(8px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 @keyframes indoor-breathe { from { opacity: .35; } to { opacity: 1; } }
 @keyframes indoor-steam { from { transform: translate(-2px, 10px) scaleX(.65); opacity: 0; } 35% { opacity: .7; } to { transform: translate(6px, -22px) scaleX(1.8); opacity: 0; } }
-@media (max-width: 1100px) { .indoor-scroll-hint { display: none; } .indoor-panel-caption h2 { font-size: 23px; } .indoor-panel-caption p { font-size: 11px; } }
+@media (max-width: 1100px) { .indoor-scroll-hint { display: none; } .namiya-world .indoor-panel-caption h2 { font-size: 25px; } .indoor-panel-caption p { font-size: 14px; } }
 @media (max-width: 700px) {
   .indoor-scene.indoor-has-envelope { --indoor-envelope-space: 78px; }
   .indoor-header { height: 71px; padding: 0 20px; gap: 10px; }
   .indoor-back { font-size: 11px !important; gap: 5px; }
   .indoor-back svg { width: 15px; }
-  .indoor-wordmark { margin: 0; font-size: 13px; letter-spacing: .1em; }
+  .indoor-wordmark { margin: 0; font-size: 21px; letter-spacing: .02em; }
   .indoor-wordmark span { display: none; }
-  .indoor-tools { gap: 6px; }
-  .indoor-tools button { width: 29px; height: 29px; }
-  .indoor-tools button svg { width: 16px; }
   .indoor-panel { align-items: center; justify-content: flex-start; gap: 0; padding-top: 18px; padding-bottom: 24px; }
   .indoor-artboard { width: min(94vw, calc((100svh - 315px - var(--indoor-envelope-space)) * 1.3333)); margin: auto; }
   .indoor-panel-caption { width: 84vw; flex-shrink: 0; }
-  .indoor-panel-caption h2 { font-size: 23px; margin: 10px 0; }
-  .indoor-panel-caption p { font-size: 11px; }
-  .indoor-eyebrow { font-size: 9px; }
+  .namiya-world .indoor-panel-caption h2 { font-size: 23px; margin: 10px 0; }
+  .indoor-panel-caption p { font-size: 14px; }
+  .indoor-eyebrow { font-size: 12px; }
   .indoor-hotspot { font-size: 11px !important; padding: 9px 11px; }
   .indoor-keeper-hotspot { padding: 0; }
   .indoor-hotspot-label { font-size: 10px; padding: 5px 8px; }
@@ -145,8 +141,8 @@
   .indoor-order-note button { font-size: 10px !important; }
   .indoor-dialog-backdrop { padding: 20px 20px 95px; }
   .indoor-dialog { padding: 25px 24px; }
-  .indoor-dialog h3 { font-size: 21px; }
+  .namiya-world .indoor-dialog h3 { font-size: 21px; }
   .indoor-dialog-words { font-size: 14px; }
 }
-@media (max-height: 650px) and (min-width: 701px) { .indoor-header { height: 62px; } .indoor-footer { min-height: 63px; padding-bottom: 12px; } .indoor-panel { gap: 12px; padding: 8px 0; } .indoor-artboard, .indoor-panel-caption { width: min(75vw, calc((100svh - 250px - var(--indoor-envelope-space)) * 1.3333)); } .indoor-panel-caption h2 { font-size: 20px; margin-top: 8px; margin-bottom: 5px; } .indoor-order-note { padding: 8px 13px; } .indoor-order-note p { font-size: 10px; } }
+@media (max-height: 650px) and (min-width: 701px) { .indoor-header { height: 62px; } .indoor-footer { min-height: 63px; padding-bottom: 12px; } .indoor-panel { gap: 12px; padding: 8px 0; } .indoor-artboard, .indoor-panel-caption { width: min(75vw, calc((100svh - 250px - var(--indoor-envelope-space)) * 1.3333)); } .namiya-world .indoor-panel-caption h2 { font-size: 20px; margin-top: 8px; margin-bottom: 5px; } .indoor-order-note { padding: 8px 13px; } .indoor-order-note p { font-size: 10px; } }
 @media (prefers-reduced-motion: reduce) { .indoor-scene *, .indoor-scene *::before, .indoor-scene *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } .indoor-steam { display: none; } }

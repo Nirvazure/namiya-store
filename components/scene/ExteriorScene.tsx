@@ -1,11 +1,14 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef, useState, type PointerEvent } from "react";
-import { ArrowRight, Clock, EnvelopeSimple, Headphones, Moon, SunHorizon } from "@phosphor-icons/react";
+import { useEffect, useRef, type CSSProperties, type PointerEvent } from "react";
+import { ArrowRight, EnvelopeSimple } from "@phosphor-icons/react";
 import { gsap } from "gsap";
 import type { LetterFlowState } from "@/domain/letterTypes";
 import layers from "@/public/joy_store_parallax/optimized/layers.json";
+import { useSceneEnvironment } from "@/components/scene/useSceneEnvironment";
+import { ExteriorCompanions } from "@/components/companions/SceneCompanions";
+import { UserCenterEntry, type UserCenterEntryProps } from "@/components/scene/UserCenterEntry";
 
 const assets = "/joy_store_parallax/optimized/";
 const partDepths: Record<string, number> = { roof_antenna: .9, roof_tiles: .2, upper_window: .2, sign_cola: .35, sign_shop: .3, awning: .6, ground_floor: 0, bicycle: .75, air_conditioner: .3, poster: .2, plants: .8 };
@@ -16,19 +19,20 @@ type Props = {
   error?: string;
   onOpenMailbox: () => void;
   onEditLetter: () => void;
-  onMusic: () => void;
-  onPomodoro: () => void;
   onEnter: () => void;
   onPrepareEntry: () => void;
   entering: boolean;
   entryError?: string;
+  userCenter?: UserCenterEntryProps;
 };
 
-export function ExteriorScene({ flowState, hasReply, error, onOpenMailbox, onEditLetter, onMusic, onPomodoro, onEnter, onPrepareEntry, entering, entryError }: Props) {
+export function ExteriorScene({ flowState, hasReply, error, onOpenMailbox, onEditLetter, onEnter, onPrepareEntry, entering, entryError, userCenter }: Props) {
   const root = useRef<HTMLElement>(null);
   const mailbox = useRef<HTMLButtonElement>(null);
   const moveScene = useRef<(x: number, y: number) => void>(() => {});
-  const [night, setNight] = useState(false);
+  const environment = useSceneEnvironment();
+  const phase = environment?.phase ?? "pending";
+  const condition = environment?.condition ?? "unknown";
   const ready = flowState === "envelopeReady";
   const delivering = flowState === "delivering";
   const paused = flowState === "letterWriting" || flowState === "replyReading" || delivering || entering;
@@ -69,28 +73,37 @@ export function ExteriorScene({ flowState, hasReply, error, onOpenMailbox, onEdi
   const mailboxLabel = delivering ? "信件投递中" : ready ? "点击邮箱，投递这封信" : hasReply ? "邮箱有回信，点击取信" : "点击邮箱，取一张信纸";
 
   return (
-    <section className={`interactive-street ${night ? "is-night" : ""} ${ready ? "letter-is-ready" : ""} ${delivering ? "is-delivering" : ""}`} ref={root} onPointerMove={handlePointer} onPointerLeave={() => { if (!paused) moveScene.current(0, 0); }} aria-label="解忧杂货店互动场景">
-      <div className="street-sky" aria-hidden="true" />
+    <section className={`interactive-street ${ready ? "letter-is-ready" : ""} ${delivering ? "is-delivering" : ""}`} data-phase={phase} data-weather={condition} ref={root} onPointerMove={handlePointer} onPointerLeave={() => { if (!paused) moveScene.current(0, 0); }} aria-label="解忧杂货店互动场景">
+      <div className="street-sky sky-dusk" aria-hidden="true" />
+      <div className="street-sky sky-morning" aria-hidden="true" />
+      <div className="street-sky sky-day" aria-hidden="true" />
       <div className="scene-paper-grain" aria-hidden="true" />
       <div className="ambient-haze" data-depth="-10" aria-hidden="true" />
       <div className="watercolor-cloud cloud-left" data-depth="-15" aria-hidden="true" />
       <div className="watercolor-cloud cloud-right" data-depth="-8" aria-hidden="true" />
       <div className="ambient-moon" data-depth="-5" aria-hidden="true" />
       <div className="ambient-stars" data-depth="-7" aria-hidden="true" />
+      <div className="weather-wash" aria-hidden="true" />
+      <div className="weather-mist" aria-hidden="true" />
+      <div className="weather-precipitation" aria-hidden="true">
+        {Array.from({ length: 24 }, (_, index) => <span key={index} style={{ "--particle-x": `${(index * 43 + 7) % 100}%`, "--particle-delay": `${-(index * .73)}s`, "--particle-speed": `${.85 + (index % 5) * .18}`, "--particle-opacity": .2 + (index % 4) * .1 } as CSSProperties} />)}
+      </div>
 
       <header className="scene-header">
-        <a className="store-brand" href="#street" aria-label="解忧杂货店"><span className="brand-mark">解</span><span>解忧杂货店<small>NAMIYA GENERAL STORE</small></span></a>
+        <a className="store-brand" href="#street" aria-label="解忧杂货店"><span className="brand-mark">解</span><span>解忧杂货店<small lang="en">Namiya General Store</small></span></a>
         <div className="scene-header-actions">
-          <button className="ambience-toggle" onClick={() => setNight(!night)} aria-label={night ? "切换为黄昏" : "切换为夜色"} aria-pressed={night} type="button">{night ? <Moon size={18} /> : <SunHorizon size={19} />}<span>{night ? "夜色" : "黄昏"}</span></button>
-          <span className="store-open">烦恼咨询，今日营业</span>
+          <UserCenterEntry {...userCenter} />
         </div>
       </header>
 
       <div className="scene-introduction">
-        <p className="scene-salutation">给此刻，有心事的你</p>
-        <h1>心事有处落笔，<br />来信总有人读。</h1>
-        <p className="scene-invitation">{hasReply ? "邮箱里，多了一封回信。" : "推门进来，坐一会儿。"}<br />{hasReply ? "点一下，慢慢读吧。" : "也可以在门前写一封信。"}</p>
+        <p className="scene-salutation">此地，此刻</p>
+        <h1 className="scene-place-name" title={environment?.placeName}>{environment?.placeName ?? (environment?.live ? "所在地天气" : "本地时间")}</h1>
+        <p className="scene-weather-reading"><span>{environment?.weatherLabel ?? "感受此刻…"}</span>{environment?.temperature !== undefined && <span className="scene-temperature">{Math.round(environment.temperature)}<small>°C</small></span>}</p>
+        <p className="scene-local-time">{environment ? <>{environment.phaseLabel} · {environment.timeSource} <time>{environment.localTime}</time></> : "正在感受此刻的光线"}</p>
+        {hasReply && <p className="scene-reply-reminder">邮箱里，多了一封回信。</p>}
         <button className="scene-write-link" onClick={hasReply ? onOpenMailbox : onEnter} onPointerEnter={onPrepareEntry} onFocus={onPrepareEntry} disabled={delivering || entering} type="button">{hasReply ? "取出你的回信" : entering ? "正在开门…" : "推门进店"}<ArrowRight size={17} /></button>
+        {(environment?.live || environment?.placeName) && <p className="scene-data-credit">{environment.live && <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">天气 · Open-Meteo</a>}{environment.placeName && <a href="https://www.bigdatacloud.com/" target="_blank" rel="noreferrer">地点 · BigDataCloud</a>}</p>}
       </div>
 
       <div className="distant-shop distant-shop-left" data-depth="-4" aria-hidden="true"><Image src={`${assets}building.webp`} alt="" fill sizes="35vw" /></div>
@@ -122,12 +135,8 @@ export function ExteriorScene({ flowState, hasReply, error, onOpenMailbox, onEdi
       {ready ? <div className="ready-letter" role="status"><div className="held-envelope" aria-hidden="true"><span className="envelope-seal">解</span></div><div><p>信已经折好了。</p><span>点击红色邮箱，亲手寄出。</span>{error ? <p className="delivery-error" role="alert">{error}</p> : null}<button onClick={onEditLetter} type="button">展开修改</button></div></div> : null}
       {delivering ? <p className="scene-delivery-status" role="status">信已投入邮箱，正在等一封回信。</p> : null}
 
-      <div className="scene-tools" aria-label="杂货店里的陪伴">
-        <button onClick={onMusic} type="button"><Headphones size={20} /><span>听一会儿</span></button>
-        <button onClick={onPomodoro} type="button"><Clock size={20} /><span>专注片刻</span></button>
-      </div>
+      <ExteriorCompanions />
       {entering || entryError ? <p className="scene-entry-status" role={entryError ? "alert" : "status"}>{entryError ?? "正在为你点亮店里的灯…"}</p> : null}
-      <div className="scene-corner-note"><span>来信不必署名</span><span>心事可以慢慢写</span></div>
     </section>
   );
 }

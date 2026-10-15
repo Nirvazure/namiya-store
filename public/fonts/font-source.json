@@ -1,0 +1,27 @@
+{
+  "upstream": "https://github.com/adobe-fonts/source-han-serif",
+  "sourceCommit": "7889f11bf31170b5d092a083b357c8c8130f89e0",
+  "sourceVersion": "Version 2.003;hotconv 1.1.1;makeotfexe 2.6.0",
+  "sourceSha256": {
+    "SourceHanSerifCN-Regular.otf": "3754ea669c530e2473354f8f6d9f79680a44d7e26ec7d00eeabee4a7e0753c5d",
+    "SourceHanSerifCN-Medium.otf": "f7906890686d17e122980efd2d6097d1caefed76312994baeaf220819e818f3a"
+  },
+  "files": [
+    {
+      "file": "namiya-book-regular.woff2",
+      "glyphs": 659,
+      "bytes": 143608
+    },
+    {
+      "file": "namiya-book-medium.woff2",
+      "glyphs": 659,
+      "bytes": 144360
+    },
+    {
+      "file": "namiya-book-extended.woff2",
+      "glyphs": 30271,
+      "bytes": 8311736
+    }
+  ],
+  "coveredCodepoints": 30930
+}

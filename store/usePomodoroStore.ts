@@ -7,8 +7,6 @@ type PomodoroStore = {
   durationSeconds: number;
   remainingSeconds: number;
   isRunning: boolean;
-  panelOpen: boolean;
-  togglePanel: () => void;
   start: () => void;
   pause: () => void;
   reset: () => void;
@@ -22,8 +20,6 @@ export const usePomodoroStore = create<PomodoroStore>((set) => ({
   durationSeconds: FOCUS_SECONDS,
   remainingSeconds: FOCUS_SECONDS,
   isRunning: false,
-  panelOpen: false,
-  togglePanel: () => set((state) => ({ panelOpen: !state.panelOpen })),
   start: () => set({ isRunning: true }),
   pause: () => set({ isRunning: false }),
   reset: () =>

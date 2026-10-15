@@ -2,10 +2,13 @@
 
 import Image from "next/image";
 import { useEffect, useRef, useState, type PointerEvent } from "react";
-import { ArrowLeft, ArrowRight, Clock, EnvelopeSimple, Headphones, X } from "@phosphor-icons/react";
+import { ArrowLeft, ArrowRight, EnvelopeSimple, X } from "@phosphor-icons/react";
 import { gsap } from "gsap";
 import { indoorCounters, indoorItems, indoorLayers, type CounterId } from "@/domain/indoor";
 import { useIndoorStore } from "@/store/useIndoorStore";
+import { attachIndoorSnap } from "@/services/scene/indoorSnap";
+import { IndoorCompanions } from "@/components/companions/SceneCompanions";
+import { useCompanionStore } from "@/store/useCompanionStore";
 import "./indoor-scene.css";
 
 export { indoorEntryAssets } from "@/domain/indoor";
@@ -16,19 +19,19 @@ type Props = {
   envelopeReady: boolean;
   onExit: () => void;
   onWrite: () => void;
-  onMusic: () => void;
-  onPomodoro: () => void;
   onEditLetter: () => void;
+  onConversationChange: (open: boolean) => void;
 };
 
 type Conversation = { counter: CounterId; kind: "talk" | "menu"; line: number };
 
-export function IndoorScene({ active, blocked, envelopeReady, onExit, onWrite, onMusic, onPomodoro, onEditLetter }: Props) {
+export function IndoorScene({ active, blocked, envelopeReady, onExit, onWrite, onEditLetter, onConversationChange }: Props) {
   const root = useRef<HTMLElement>(null);
   const scroller = useRef<HTMLDivElement>(null);
   const dialogBox = useRef<HTMLDivElement>(null);
   const moveScene = useRef<(x: number, y: number) => void>(() => {});
   const navigate = useRef<(index: number) => void>(() => {});
+  const cancelNavigation = useRef<() => void>(() => {});
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const currentCounter = useIndoorStore((state) => state.currentCounter);
   const orders = useIndoorStore((state) => state.orders);
@@ -41,7 +44,7 @@ export function IndoorScene({ active, blocked, envelopeReady, onExit, onWrite, o
   useEffect(() => {
     pauseRef.current = paused;
     if (paused && scroller.current) {
-      gsap.killTweensOf(scroller.current);
+      cancelNavigation.current();
       moveScene.current(0, 0);
     }
   }, [paused]);
@@ -55,12 +58,8 @@ export function IndoorScene({ active, blocked, envelopeReady, onExit, onWrite, o
     if (!active || !root.current || !scroller.current) return;
     const viewport = scroller.current;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
-    let width = viewport.clientWidth;
-    let wheelTarget = viewport.scrollLeft;
-    let lastWheel = 0;
     let pointerX = 0;
     let pointerY = 0;
-    let wheelTween: gsap.core.Tween | undefined;
     const layers = Array.from(root.current.querySelectorAll<HTMLElement>("[data-indoor-depth]"));
     const planes = layers.map((element) => {
       const depth = Number(element.dataset.indoorDepth);
@@ -68,71 +67,48 @@ export function IndoorScene({ active, blocked, envelopeReady, onExit, onWrite, o
       return { element, depth, index: Number(element.dataset.indoorIndex), x: gsap.quickTo(element, "x", { duration, ease: "power3.out" }), y: gsap.quickTo(element, "y", { duration: duration + .15, ease: "power3.out" }) };
     });
     function updateMotion() {
-      const progress = viewport.scrollLeft / (width || 1);
+      const progress = viewport.scrollLeft / (viewport.clientWidth || 1);
       for (const plane of planes) {
         const local = Math.max(-1.2, Math.min(1.2, progress - plane.index));
         plane.x(reduced.matches ? 0 : pointerX * plane.depth - local * plane.depth * 1.6);
         plane.y(reduced.matches ? 0 : pointerY * plane.depth * .45);
       }
     }
-    function onScroll() {
-      // Resizing may clamp scrollLeft before ResizeObserver restores this counter.
-      if (viewport.clientWidth !== width) return;
-      const index = Math.max(0, Math.min(3, Math.round(viewport.scrollLeft / (width || 1))));
-      const id = indoorCounters[index].id;
-      if (useIndoorStore.getState().currentCounter !== id) useIndoorStore.getState().setCounter(id);
-      updateMotion();
-    }
-    function onWheel(event: WheelEvent) {
-      if (pauseRef.current) { event.preventDefault(); return; }
-      // Leave touchpads' native horizontal gesture intact; convert ordinary wheels.
-      if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
-      event.preventDefault();
-      const now = performance.now();
-      if (now - lastWheel > 260) wheelTarget = viewport.scrollLeft;
-      lastWheel = now;
-      const delta = event.deltaY * (event.deltaMode === 1 ? 18 : event.deltaMode === 2 ? width : 1);
-      wheelTarget = Math.max(0, Math.min(viewport.scrollWidth - width, wheelTarget + delta * 1.5));
-      wheelTween?.kill();
-      wheelTween = gsap.to(viewport, { scrollLeft: wheelTarget, duration: reduced.matches ? 0 : .48, ease: "power2.out", overwrite: true });
-    }
-    function goTo(index: number) {
-      if (pauseRef.current) return;
-      wheelTarget = index * width;
-      lastWheel = 0;
-      wheelTween?.kill();
-      wheelTween = gsap.to(viewport, { scrollLeft: wheelTarget, duration: reduced.matches ? 0 : .9, ease: "power3.inOut", overwrite: true });
-    }
-    navigate.current = goTo;
-    moveScene.current = (x, y) => { pointerX = x; pointerY = y; updateMotion(); };
     const initial = indoorCounters.findIndex((counter) => counter.id === useIndoorStore.getState().currentCounter);
-    viewport.scrollLeft = initial * width;
-    const resize = new ResizeObserver(() => {
-      if (!viewport.clientWidth || viewport.clientWidth === width) return;
-      const index = indoorCounters.findIndex((counter) => counter.id === useIndoorStore.getState().currentCounter);
-      width = viewport.clientWidth;
-      wheelTween?.kill();
-      viewport.scrollLeft = index * width;
-      wheelTarget = viewport.scrollLeft;
-      updateMotion();
+    const snap = attachIndoorSnap(viewport, {
+      count: indoorCounters.length,
+      initialIndex: initial,
+      isPaused: () => pauseRef.current,
+      onSelect(index) {
+        const id = indoorCounters[index].id;
+        if (useIndoorStore.getState().currentCounter !== id) {
+          useCompanionStore.getState().close();
+          useIndoorStore.getState().setCounter(id);
+        }
+      },
+      onMove: updateMotion,
     });
-    resize.observe(viewport);
-    viewport.addEventListener("scroll", onScroll, { passive: true });
-    viewport.addEventListener("wheel", onWheel, { passive: false });
+    navigate.current = snap.select;
+    cancelNavigation.current = snap.cancel;
+    moveScene.current = (x, y) => { pointerX = x; pointerY = y; updateMotion(); };
+    viewport.addEventListener("scroll", updateMotion, { passive: true });
     reduced.addEventListener("change", updateMotion);
     return () => {
-      wheelTween?.kill();
+      snap.destroy();
       planes.forEach((plane) => { plane.x.tween.kill(); plane.y.tween.kill(); gsap.set(plane.element, { clearProps: "transform" }); });
-      resize.disconnect();
-      viewport.removeEventListener("scroll", onScroll);
-      viewport.removeEventListener("wheel", onWheel);
+      viewport.removeEventListener("scroll", updateMotion);
       reduced.removeEventListener("change", updateMotion);
       moveScene.current = () => {};
       navigate.current = () => {};
+      cancelNavigation.current = () => {};
     };
   }, [active]);
 
   const dialogKey = conversation ? `${conversation.counter}-${conversation.kind}` : null;
+  useEffect(() => {
+    onConversationChange(Boolean(dialogKey));
+    return () => onConversationChange(false);
+  }, [dialogKey, onConversationChange]);
   useEffect(() => {
     if (!dialogKey) return;
     const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -152,9 +128,14 @@ export function IndoorScene({ active, blocked, envelopeReady, onExit, onWrite, o
   }, [dialogKey]);
 
   function handlePointer(event: PointerEvent<HTMLElement>) {
-    if (paused || event.pointerType === "touch") return;
+    if (paused || event.pointerType === "touch" || (event.target instanceof Element && event.target.closest("[data-companion-interactive]"))) return;
     const box = event.currentTarget.getBoundingClientRect();
     moveScene.current((event.clientX - box.left) / box.width * 2 - 1, (event.clientY - box.top) / box.height * 2 - 1);
+  }
+
+  function openConversation(next: Conversation) {
+    useCompanionStore.getState().close();
+    setConversation(next);
   }
 
   return (
@@ -164,7 +145,6 @@ export function IndoorScene({ active, blocked, envelopeReady, onExit, onWrite, o
         <header className="indoor-header">
           <button data-indoor-exit className="indoor-back" type="button" onClick={onExit} disabled={blocked}><ArrowLeft size={18} /><span>返回街角</span></button>
           <p className="indoor-wordmark">解忧杂货店 <span>店内散步</span></p>
-          <div className="indoor-tools"><button type="button" aria-label="打开音乐" onClick={onMusic}><Headphones size={20} /></button><button type="button" aria-label="打开番茄钟" onClick={onPomodoro}><Clock size={20} /></button></div>
         </header>
 
         <div ref={scroller} className={`indoor-scroller ${paused ? "indoor-scroll-paused" : ""}`} aria-label="横向探索四个柜台" onTouchStart={() => moveScene.current(0, 0)}>
@@ -177,12 +157,13 @@ export function IndoorScene({ active, blocked, envelopeReady, onExit, onWrite, o
               <div className="indoor-artboard">
                 <div className="indoor-art-shadow" aria-hidden="true" />
                 {indoorLayers.map((layer) => <div className={`indoor-plane indoor-plane-${layer.name}`} data-indoor-depth={layer.depth} data-indoor-index={index} key={layer.name} aria-hidden="true"><Image src={`/indoor/optimized/${counter.id}/${layer.name}.webp`} alt="" fill sizes="(max-width: 700px) 112vw, 85vw" unoptimized loading={index === 0 ? "eager" : "lazy"} draggable={false} /></div>)}
-                <button className={`indoor-hotspot indoor-keeper-hotspot indoor-keeper-${counter.id}`} type="button" aria-label={`和${counter.keeper}聊聊`} onClick={() => setConversation({ counter: counter.id, kind: "talk", line: 0 })}><span className="indoor-hotspot-dot" /><span className="indoor-hotspot-label">和{counter.keeper}聊聊</span></button>
-                {counter.id === "grandpa" ? <button className="indoor-hotspot indoor-writing-hotspot" type="button" onClick={envelopeReady ? onEditLetter : onWrite}><EnvelopeSimple size={19} /><span>{envelopeReady ? "展开信纸" : "写一封信"}</span></button> : <button className="indoor-hotspot indoor-menu-hotspot" type="button" onClick={() => setConversation({ counter: counter.id, kind: "menu", line: 0 })}><span>看看菜单</span><ArrowRight size={16} /></button>}
+                <div className="indoor-companion-plane" data-indoor-depth={indoorLayers.find(layer => layer.name === "counter")?.depth ?? 20.4} data-indoor-index={index}><IndoorCompanions counter={counter.id} /></div>
+                <button className={`indoor-hotspot indoor-keeper-hotspot indoor-keeper-${counter.id}`} type="button" aria-label={`和${counter.keeper}聊聊`} onClick={() => openConversation({ counter: counter.id, kind: "talk", line: 0 })}><span className="indoor-hotspot-dot" /><span className="indoor-hotspot-label">和{counter.keeper}聊聊</span></button>
+                {counter.id === "grandpa" ? <button className="indoor-hotspot indoor-writing-hotspot" type="button" onClick={envelopeReady ? onEditLetter : onWrite}><EnvelopeSimple size={19} /><span>{envelopeReady ? "展开信纸" : "写一封信"}</span></button> : <button className="indoor-hotspot indoor-menu-hotspot" type="button" onClick={() => openConversation({ counter: counter.id, kind: "menu", line: 0 })}><span>看看菜单</span><ArrowRight size={16} /></button>}
                 {order && item && <div className={`indoor-order indoor-order-${order.phase}`} aria-live="polite">
                   {order.phase === "preparing" ? <div className="indoor-preparing"><span className="indoor-preparing-dot" /><p>{item.preparing}</p></div> : <>
                     <div className="indoor-served-item"><Image src={`/indoor/optimized/items/${order.item}.webp`} width={224} height={180} unoptimized alt={item.name} />{(order.item === "matcha" || order.item === "coffee") && <div className="indoor-steam" aria-hidden="true"><i /><i /><i /></div>}</div>
-                    <div className="indoor-order-note"><p>{order.phase === "tasted" ? item.tasted : item.served}</p><div>{order.phase !== "tasted" && <button type="button" onClick={() => useIndoorStore.getState().taste(counter.id)}>{item.verb}</button>}<button type="button" onClick={() => useIndoorStore.getState().clear(counter.id)}>收起</button><button type="button" onClick={() => setConversation({ counter: counter.id, kind: "menu", line: 0 })}>再点一份</button></div></div>
+                    <div className="indoor-order-note"><p>{order.phase === "tasted" ? item.tasted : item.served}</p><div>{order.phase !== "tasted" && <button type="button" onClick={() => useIndoorStore.getState().taste(counter.id)}>{item.verb}</button>}<button type="button" onClick={() => useIndoorStore.getState().clear(counter.id)}>收起</button><button type="button" onClick={() => openConversation({ counter: counter.id, kind: "menu", line: 0 })}>再点一份</button></div></div>
                   </>}
                 </div>}
               </div>
