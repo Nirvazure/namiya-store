@@ -1,0 +1,112 @@
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+  directUrl = env("DIRECT_DATABASE_URL")
+  schemas = ["namiya_store"]
+}
+
+model Profile {
+  id String @id @default(cuid())
+  authUserId String @unique @db.Uuid
+  createdAt DateTime @default(now())
+  @@map("profiles")
+  @@schema("namiya_store")
+}
+
+model Shop {
+  id String @id @default(cuid())
+  ownerId String @unique @db.Uuid
+  isOpen Boolean @default(true)
+  discoverable Boolean @default(true)
+  acceptingLetters Boolean @default(true)
+  ownerDisplayName String @default("旅人")
+  ownerAvatarUrl String?
+  draft Json?
+  published Json?
+  publishedAt DateTime?
+  revision Int @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  favorites ShopFavorite[]
+  @@index([isOpen, discoverable, publishedAt])
+  @@map("shops")
+  @@schema("namiya_store")
+}
+
+model ShopFavorite {
+  userId String @db.Uuid
+  shopId String
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  @@id([userId, shopId])
+  @@index([userId, createdAt, shopId])
+  @@map("shop_favorites")
+  @@schema("namiya_store")
+}
+
+model Upload {
+  id String @id @default(cuid())
+  ownerId String @db.Uuid
+  path String @unique
+  contentType String
+  size Int
+  width Int
+  height Int
+  createdAt DateTime @default(now())
+  @@index([ownerId, createdAt])
+  @@map("uploads")
+  @@schema("namiya_store")
+}
+
+model Thread {
+  id String @id @default(cuid())
+  shopId String
+  shopOwnerId String? @db.Uuid
+  visitorId String @db.Uuid
+  signature String?
+  title String
+  clientRequestId String
+  blockedByVisitor Boolean @default(false)
+  blockedByOwner Boolean @default(false)
+  visitorReadAt DateTime?
+  ownerReadAt DateTime?
+  generationStatus String @default("idle")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  messages Message[]
+  @@unique([visitorId, clientRequestId])
+  @@index([visitorId, updatedAt])
+  @@index([shopOwnerId, updatedAt])
+  @@map("threads")
+  @@schema("namiya_store")
+}
+
+model Message {
+  id String @id @default(cuid())
+  threadId String
+  thread Thread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  role String
+  seq Int
+  body String
+  source String @default("human")
+  clientRequestId String?
+  replyToId String? @unique
+  status String @default("completed")
+  leaseUntil DateTime?
+  error String?
+  audioPath String?
+  audioStatus String @default("idle")
+  audioLeaseUntil DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([threadId, clientRequestId])
+  @@unique([threadId, seq])
+  @@index([threadId, createdAt])
+  @@map("messages")
+  @@schema("namiya_store")
+}

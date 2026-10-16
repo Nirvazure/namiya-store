@@ -35,6 +35,8 @@ try {
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, timezoneId: 'America/Los_Angeles', geolocation: { latitude: 31.23, longitude: 121.47 }, permissions: ['geolocation'] });
   const page = await context.newPage();
   observe(page);
+  await context.route('**/api/me', route => route.fulfill({ json: { user: null, configured: false, myShopId: null } }));
+  await context.route('**/api/shops', route => route.fulfill({ json: { shops: [], nextCursor: null } }));
   await page.addInitScript(() => {
     window.locationRequests = 0;
     const original = navigator.geolocation.getCurrentPosition.bind(navigator.geolocation);
@@ -51,7 +53,7 @@ try {
         const scene = document.querySelector('.interactive-street');
         return scene?.dataset.phase === phase && scene?.dataset.weather === condition;
       }, { phase, condition });
-      assert.equal(await page.locator('.scene-weather-status').evaluate(el => el.tagName), 'SPAN');
+      assert.equal(await page.locator('.scene-local-time').evaluate(el => el.tagName), 'P');
       assert.equal(await page.locator('.ambience-toggle').count(), 0);
       assert.equal(await page.evaluate(() => window.locationRequests), 1, 'Strict Mode must not request location twice');
       for (const layer of ['.weather-wash', '.weather-mist', '.weather-precipitation']) {
@@ -71,9 +73,8 @@ try {
   current = fixture('22:00', 71);
   await page.goto(origin, { waitUntil: 'networkidle' });
   await page.waitForFunction(() => document.querySelector('.interactive-street')?.dataset.weather === 'snow');
-  const bounds = await page.locator('.scene-weather-status').boundingBox();
-  const brand = await page.locator('.store-brand').boundingBox();
-  assert.ok(bounds.x >= brand.x + brand.width && bounds.x + bounds.width <= 390);
+  const bounds = await page.locator('.scene-local-time').boundingBox();
+  assert.ok(bounds.x >= 0 && bounds.x + bounds.width <= 390);
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth), 390);
   await capture(page, 'mobile-night-snow');
   await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -82,33 +83,30 @@ try {
   await page.getByRole('dialog').waitFor();
   await page.getByLabel('写下你的心事').fill('今晚的雪，让人想写一封信。');
   await page.getByRole('button', { name: '收起信纸，保留草稿' }).click();
-  await page.getByRole('button', { name: '听一会儿', exact: true }).click();
-  await page.getByRole('button', { name: '关闭音乐面板' }).click();
-  await page.getByRole('button', { name: '专注片刻', exact: true }).click();
-  await page.getByRole('button', { name: '关闭番茄钟面板' }).click();
-  await page.route('**/api/letters/reply', async route => {
-    assert.equal(route.request().postDataJSON().body, '今晚的雪，让人想写一封信。');
-    await route.fulfill({ json: { letterId: 'weather-regression', characterId: 'grandpa', content: '信已经收到，窗里的灯为你亮着。', createdAt: new Date(current.observedAt).toISOString(), source: 'mock' } });
-  });
+  await page.locator('.music-dock-summary').click();
+  await page.getByRole('button', { name: '收起控制' }).click();
+  await page.locator('.focus-bookmark').click();
+  await page.getByRole('button', { name: '收起控制' }).click();
   await page.getByRole('button', { name: '点击邮箱，取一张信纸', exact: true }).click();
   await page.getByRole('button', { name: '折好信纸' }).click();
   await page.getByRole('button', { name: '点击邮箱，投递这封信', exact: true }).click();
-  await page.getByRole('button', { name: '邮箱有回信，点击取信', exact: true }).click();
-  await page.getByText('信已经收到，窗里的灯为你亮着。', { exact: true }).waitFor();
-  await page.getByRole('button', { name: '收好这封信' }).click();
+  await page.getByRole('dialog', { name: '让心事有处寄达' }).waitFor();
+  await page.getByRole('button', { name: '关闭窗口' }).click();
   await page.locator('.shop-entry-door').click();
   await page.locator('#indoor-scene.indoor-is-active').waitFor();
-  passed.push('mobile layout, reduced motion, letter delivery/reply, music, pomodoro and indoor entry');
+  passed.push('mobile layout, reduced motion, draft retention, login before delivery, music, pomodoro and indoor entry');
   await context.close();
 
   const denied = await browser.newContext({ viewport: { width: 390, height: 844 }, timezoneId: 'Asia/Shanghai' });
   const fallback = await denied.newPage();
   observe(fallback);
+  await denied.route('**/api/me', route => route.fulfill({ json: { user: null, configured: false, myShopId: null } }));
+  await denied.route('**/api/shops', route => route.fulfill({ json: { shops: [], nextCursor: null } }));
   await fallback.clock.setSystemTime(Date.parse('2026-10-15T19:30:00+08:00'));
   await fallback.route('**/api/weather?**', () => { throw new Error('Denied location must not request weather'); });
   await fallback.goto(origin, { waitUntil: 'networkidle' });
-  await fallback.waitForFunction(() => document.querySelector('.scene-weather-status')?.textContent.includes('夜晚 · 本地时间'));
-  assert.equal(await fallback.locator('.weather-credit').count(), 0);
+  await fallback.waitForFunction(() => document.querySelector('.scene-local-time')?.textContent.includes('夜晚 · 本地时间'));
+  assert.equal(await fallback.locator('.scene-data-credit').count(), 0);
   await capture(fallback, 'mobile-location-denied');
   passed.push('denied location uses local device time');
   await denied.close();

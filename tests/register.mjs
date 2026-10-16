@@ -11,6 +11,11 @@ registerHooks({
       const resolved = ['', '.ts', '.tsx'].map(extension => new URL(`${base.href}${extension}`)).find(url => existsSync(fileURLToPath(url)));
       return next((resolved ?? base).href, context);
     }
+    if (specifier.startsWith('.') && context.parentURL?.startsWith('file:') && !context.parentURL.includes('/node_modules/')) {
+      const base = new URL(specifier, context.parentURL);
+      const resolved = ['.ts', '.tsx'].map(extension => new URL(`${base.href}${extension}`)).find(url => existsSync(fileURLToPath(url)));
+      if (resolved) return next(resolved.href, context);
+    }
     return next(specifier, context);
   },
   load(url, context, next) {

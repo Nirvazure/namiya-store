@@ -1,169 +1,71 @@
 "use client";
 
 import { create } from "zustand";
-import { defaultCharacter } from "@/domain/characters";
-import { isLetterReply } from "@/domain/letterTypes";
-import type {
-  CharacterId,
-  LetterDraft,
-  LetterFlowState,
-  LetterReply,
-  MailboxState,
-  PrivacyMode,
-} from "@/domain/letterTypes";
+import type { CharacterId, LetterDraft, LetterFlowState, LetterReply, MailboxState, PrivacyMode } from "@/domain/letterTypes";
+import { defaultShop, type Shop } from "@/domain/shops";
 import { readLocalValue, writeLocalValue } from "@/services/storage/localStorageService";
 
-type RecentLetter = {
-  title: string;
-  body: string;
-  characterId: CharacterId;
-  privacyMode: PrivacyMode;
-  reply: LetterReply;
-};
-
+type DraftRecord = { draft: LetterDraft; signature: string; clientRequestId: string };
 type LetterStore = {
-  flowState: LetterFlowState;
-  mailboxState: MailboxState;
-  draft: LetterDraft;
-  selectedCharacterId: CharacterId;
-  privacyMode: PrivacyMode;
-  reply?: LetterReply;
-  error?: string;
-  openIntroLetter: () => void;
-  openLetter: () => void;
-  closeLetter: () => void;
+  flowState: LetterFlowState; mailboxState: MailboxState; draft: LetterDraft;
+  selectedCharacterId: CharacterId; privacyMode: PrivacyMode; signature: string;
+  shop: Shop; userId: string | null; clientRequestId: string;
+  reply?: LetterReply; error?: string;
+  setContext: (userId: string | null, shop: Shop) => void;
+  setSignature: (value: string) => void;
+  openIntroLetter: () => void; openLetter: () => void; closeLetter: () => void;
   updateDraft: (draft: Partial<LetterDraft>) => void;
-  beginCharacterSelection: () => boolean;
-  prepareEnvelope: () => boolean;
-  setSelectedCharacter: (characterId: CharacterId) => void;
-  setPrivacyMode: (mode: PrivacyMode) => void;
-  beginDelivery: () => void;
-  failDelivery: (message: string) => void;
-  setReply: (reply: LetterReply) => void;
-  openReply: () => void;
-  resetLetter: () => void;
+  beginCharacterSelection: () => boolean; prepareEnvelope: () => boolean;
+  setSelectedCharacter: (id: CharacterId) => void; setPrivacyMode: (mode: PrivacyMode) => void;
+  beginDelivery: () => void; failDelivery: (message: string) => void; completeDelivery: () => void;
+  setReply: (reply: LetterReply) => void; openReply: () => void; resetLetter: () => void;
   hydrateRecent: () => void;
 };
-
-const RECENT_KEY = "namiya.recent-letter";
-
-const emptyDraft: LetterDraft = {
-  title: "",
-  body: "",
-};
-
+function draftKey(userId: string | null, shopId: string) { return `namiya.draft.v2:${userId ?? "guest"}:${shopId}`; }
+function emptyRecord(): DraftRecord { return { draft: { title: "", body: "" }, signature: "", clientRequestId: "" }; }
+function readDraft(userId: string | null, shopId: string): DraftRecord {
+  const raw = readLocalValue<Partial<DraftRecord> | null>(draftKey(userId, shopId), null);
+  return raw && typeof raw.draft?.title === "string" && typeof raw.draft?.body === "string"
+    ? { draft: raw.draft, signature: typeof raw.signature === "string" ? raw.signature : "", clientRequestId: typeof raw.clientRequestId === "string" ? raw.clientRequestId : "" }
+    : emptyRecord();
+}
+function persist(state: Pick<LetterStore, "userId" | "shop" | "draft" | "signature" | "clientRequestId">) {
+  writeLocalValue(draftKey(state.userId, state.shop.id), { draft: state.draft, signature: state.signature, clientRequestId: state.clientRequestId });
+}
 export const useLetterStore = create<LetterStore>((set, get) => ({
-  flowState: "idle",
-  mailboxState: "normal",
-  draft: emptyDraft,
-  selectedCharacterId: defaultCharacter.id,
-  privacyMode: "private",
-  openIntroLetter: () =>
-    set({
-      flowState: "letterWriting",
-      mailboxState: "glowing",
-    }),
-  openLetter: () =>
-    set({
-      flowState: "letterWriting",
-      mailboxState: "open",
-      error: undefined,
-    }),
-  closeLetter: () =>
-    set((state) => ({
-      flowState: "idle",
-      mailboxState: state.reply ? "hasReply" : "normal",
-      error: undefined,
-    })),
-  updateDraft: (draft) =>
-    set((state) => ({
-      draft: {
-        ...state.draft,
-        ...draft,
-        updatedAt: new Date().toISOString(),
-      },
-    })),
+  flowState: "idle", mailboxState: "normal", draft: { title: "", body: "" },
+  selectedCharacterId: "grandpa", privacyMode: "anonymous", signature: "", shop: defaultShop,
+  userId: null, clientRequestId: "",
+  setContext: (userId, shop) => {
+    const state = get();
+    if (state.userId === userId && state.shop.id === shop.id) { set({ shop }); return; }
+    persist(state);
+    set({ ...readDraft(userId, shop.id), userId, shop, flowState: "idle", mailboxState: "normal", reply: undefined, error: undefined });
+  },
+  setSignature: signature => { set({ signature, clientRequestId: "" }); persist(get()); },
+  openIntroLetter: () => get().openLetter(),
+  openLetter: () => set({ flowState: "letterWriting", mailboxState: "open", error: undefined }),
+  closeLetter: () => set({ flowState: "idle", mailboxState: "normal", error: undefined }),
+  updateDraft: draft => {
+    set(state => ({ draft: { ...state.draft, ...draft, updatedAt: new Date().toISOString() }, clientRequestId: "" })); persist(get());
+  },
   beginCharacterSelection: () => {
-    const body = get().draft.body.trim();
-    if (!body) {
-      set({ error: "请先写下一点想投进邮箱的话。" });
-      return false;
-    }
-
-    set({ flowState: "characterSelecting", error: undefined });
-    return true;
+    if (!get().draft.body.trim()) { set({ error: "请先写下一点心事。" }); return false; }
+    set({ flowState: "characterSelecting", error: undefined }); return true;
   },
   prepareEnvelope: () => {
-    if (get().flowState === "delivering") return false;
-    if (!get().draft.body.trim()) {
-      set({ error: "请先写下一点想投进邮箱的话。" });
-      return false;
-    }
-    set({ flowState: "envelopeReady", mailboxState: "normal", error: undefined });
-    return true;
+    if (!get().draft.body.trim() || get().flowState === "delivering") return false;
+    set(state => ({ flowState: "envelopeReady", mailboxState: "normal", clientRequestId: state.clientRequestId || crypto.randomUUID(), error: undefined }));
+    persist(get()); return true;
   },
-  setSelectedCharacter: (characterId) => set({ selectedCharacterId: characterId === "cat" ? "grandpa" : characterId }),
-  setPrivacyMode: (mode) => set({ privacyMode: mode }),
-  beginDelivery: () =>
-    set({
-      flowState: "delivering",
-      mailboxState: "delivering",
-      error: undefined,
-    }),
-  failDelivery: (message) =>
-    set({
-      flowState: "envelopeReady",
-      mailboxState: "normal",
-      error: message,
-    }),
-  setReply: (reply) => {
-    const { draft, selectedCharacterId, privacyMode } = get();
-    try {
-      writeLocalValue<RecentLetter>(RECENT_KEY, {
-        title: draft.title,
-        body: draft.body,
-        characterId: selectedCharacterId,
-        privacyMode,
-        reply,
-      });
-    } catch {
-      // Storage may be unavailable; keep the delivered reply readable this visit.
-    }
-    set({
-      reply,
-      flowState: "replyReady",
-      mailboxState: "hasReply",
-      error: undefined,
-    });
-  },
-  openReply: () => set({ flowState: "replyReading", mailboxState: "open" }),
-  resetLetter: () =>
-    set({
-      flowState: "idle",
-      mailboxState: "normal",
-      draft: emptyDraft,
-      selectedCharacterId: defaultCharacter.id,
-      privacyMode: "private",
-      reply: undefined,
-      error: undefined,
-    }),
-  hydrateRecent: () => {
-    const value = readLocalValue<unknown>(RECENT_KEY, null);
-    if (typeof value !== "object" || value === null) return;
-    const recent = value as Record<string, unknown>;
-    if (
-      typeof recent.title === "string" &&
-      typeof recent.body === "string" && recent.body.trim().length > 0 &&
-      (recent.characterId === "grandpa" || recent.characterId === "cat" || recent.characterId === "clerk") &&
-      (recent.privacyMode === "private" || recent.privacyMode === "anonymous") &&
-      isLetterReply(recent.reply)
-    ) {
-      set({
-        selectedCharacterId: recent.characterId === "cat" ? "grandpa" : recent.characterId,
-        privacyMode: recent.privacyMode,
-        reply: recent.reply,
-        mailboxState: "hasReply",
-      });
-    }
-  },
+  setSelectedCharacter: selectedCharacterId => set({ selectedCharacterId }),
+  setPrivacyMode: privacyMode => set({ privacyMode }),
+  beginDelivery: () => set({ flowState: "delivering", mailboxState: "delivering", error: undefined }),
+  failDelivery: error => set({ flowState: "envelopeReady", mailboxState: "normal", error }),
+  completeDelivery: () => { set({ ...emptyRecord(), flowState: "idle", mailboxState: "normal", error: undefined }); persist(get()); },
+  setReply: reply => set({ reply, flowState: "replyReady", mailboxState: "hasReply" }),
+  openReply: () => set({ flowState: "replyReading" }),
+  resetLetter: () => get().completeDelivery(),
+  // Never assign the legacy local-only letter to a signed-in account.
+  hydrateRecent: () => { set(readDraft(get().userId, get().shop.id)); },
 }));
