@@ -32,8 +32,6 @@
 .anchor-label { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .shop-anchor:focus-visible .anchor-label { left: 60px; width: max-content; max-width: 180px; height: auto; padding: 7px 12px; clip-path: none; background: #f6f0e3; border: 1px solid #c9c6b2; border-radius: 6px; font: 12px/1.5 var(--font-ui); white-space: normal; }
 .world-shop-card { position: fixed; left: max(96px, 6.5%); bottom: calc(var(--music-dock-height) + 28px); z-index: 18; display: flex; align-items: center; gap: 14px; max-width: min(420px, calc(100vw - 120px)); color: #35433b; }
-.world-shop-card strong { display: block; max-width: 260px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font: 500 17px/1.6 var(--font-reading); }
-.world-shop-card small { display: block; font: 12px/1.6 var(--font-ui); color: #54604f; }
 .world-favorite { flex-shrink: 0; display: grid; place-items: center; width: 44px; height: 44px; border: 1px solid #bcbfa8; border-radius: 50%; background: #f3efdfb8; color: #48634d; }
 .world-favorite[aria-pressed=true] { color: #a65a3c; border-color: #b18b64; }
 .shop-closed .shop-art, .shop-closed .whole-shop-picture { filter: brightness(.57) saturate(.55); }
@@ -47,7 +45,6 @@
 .world-roam button { display: grid; place-items: center; width: 44px; height: 44px; border: 1px solid #bfc2ad; border-radius: 50%; background: #f3efdfc9; color: inherit; transition: transform .18s; }
 .world-roam button:hover:not(:disabled) { transform: translateX(2px); }
 .world-roam button:disabled { opacity: .4; cursor: default; }
-.world-roam span { font: 12px/1.5 var(--font-ui); }
 .world-stage { touch-action: pan-y; outline-offset: -6px; }
 .world-stage[data-direction=next] > .interactive-street { animation: shop-arrive-next .24s ease-out; }
 .world-stage[data-direction=previous] > .interactive-street { animation: shop-arrive-previous .24s ease-out; }
@@ -64,13 +61,13 @@
   .shop-anchor .shop-avatar { width: 34px; height: 34px; flex-basis: 34px; }
   .anchor-favorites { max-height: 22svh; }
   .world-shop-card { left: 74px; bottom: calc(var(--music-dock-height) + 14px); gap: 9px; max-width: calc(100vw - 94px); }
-  .world-shop-card strong { max-width: 190px; font-size: 15px; }
-  .world-shop-card small { font-size: 11px; }
   .world-roam { right: 14px; bottom: calc(var(--music-dock-height) + 112px); gap: 8px; }
-  .world-roam span { display: none; }
   .closed-shop-status { left: 58%; top: 62%; padding: 12px 18px; width: max-content; max-width: 65vw; }
   .closed-shop-status strong { font-size: 19px; }
   .namiya-world .indoor-header { padding-right: 180px; }
+  .namiya-world .indoor-header:has(.indoor-decorate) { height: 112px; align-content: start; }
+  .indoor-header:has(.indoor-decorate) .indoor-back { margin-top: 14px; min-height: 44px; white-space: nowrap; }
+  .namiya-world .indoor-decorate { position: absolute; right: 20px; bottom: 4px; }
   .namiya-world .indoor-wordmark { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { .shop-anchor, .world-roam button { transition: none; } .world-stage > .interactive-street { animation: none; } }

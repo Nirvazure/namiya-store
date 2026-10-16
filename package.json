@@ -7,6 +7,8 @@
     "test:legacy": "node --import ./tests/register.mjs --test tests/*.test.mjs",
     "test:browser": "node tests/browser-weather.mjs",
     "test:browser:indoor": "node tests/browser-indoor.mjs",
+    "test:browser:exploration": "node tests/browser-exploration.mjs",
+    "test:browser:decoration": "node tests/browser-decoration.mjs",
     "prepare:scene": "node scripts/prepare-scene.mjs",
     "prepare:indoor": "node scripts/prepare-indoor.mjs",
     "dev": "next dev",

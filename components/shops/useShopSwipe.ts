@@ -30,8 +30,11 @@ export function useShopSwipe(enabled: boolean, onMove: (direction: "next" | "pre
     onPointerCancel() { start.current = null; suppressClick.current = false; },
     onClickCapture(event: MouseEvent<HTMLDivElement>) { if (suppressClick.current) { event.preventDefault(); event.stopPropagation(); } },
     onKeyDown(event: KeyboardEvent<HTMLDivElement>) {
-      if (!enabled || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey || event.target instanceof Element && event.target.closest(interactive)) return;
-      if (event.key === "ArrowLeft" || event.key === "ArrowRight") { event.preventDefault(); onMove(event.key === "ArrowRight" ? "next" : "previous"); }
+      if (!enabled || event.defaultPrevented || event.repeat || event.nativeEvent.isComposing || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey || event.target instanceof Element && event.target.closest(interactive)) return;
+      if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) {
+        event.preventDefault();
+        onMove(event.key === "ArrowRight" || event.key === "ArrowDown" ? "next" : "previous");
+      }
     },
   };
 }

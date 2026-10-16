@@ -45,11 +45,12 @@ export function locationDate(now: number, timezone: string): string {
   return ["year", "month", "day"].map(type => parts.find(part => part.type === type)!.value).join("-");
 }
 
-export function getSceneEnvironment(now: number, weather?: WeatherSnapshot): SceneEnvironment {
-  const hour = new Date(now).getHours();
+export function getSceneEnvironment(now: number, weather?: WeatherSnapshot, fallbackTimezone?: string): SceneEnvironment {
+  const hour = fallbackTimezone ? Number(new Intl.DateTimeFormat("en-US", { timeZone: fallbackTimezone, hour: "numeric", hourCycle: "h23" }).format(now)) : new Date(now).getHours();
   const fallbackPhase: DayPhase = hour >= 5 && hour < 8 ? "morning" : hour >= 8 && hour < 17 ? "day" : hour >= 17 && hour < 19 ? "dusk" : "night";
   const clock = (timezone?: string) => new Intl.DateTimeFormat("zh-CN", { timeZone: timezone, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(now);
-  const fallback: SceneEnvironment = { phase: fallbackPhase, phaseLabel: phaseLabels[fallbackPhase], condition: "unknown", label: `${phaseLabels[fallbackPhase]} · 本地时间`, weatherLabel: "天气暂不可用", localTime: clock(), localDate: locationDate(now, Intl.DateTimeFormat().resolvedOptions().timeZone), timeSource: "本地时间", live: false };
+  const timeSource = fallbackTimezone ? "当地时间" : "本地时间";
+  const fallback: SceneEnvironment = { phase: fallbackPhase, phaseLabel: phaseLabels[fallbackPhase], condition: "unknown", label: `${phaseLabels[fallbackPhase]} · ${timeSource}`, weatherLabel: "天气暂不可用", localTime: clock(fallbackTimezone), localDate: locationDate(now, fallbackTimezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone), timeSource, live: false };
   if (!weather || now - Math.min(weather.fetchedAt, weather.observedAt) >= WEATHER_MAX_AGE_MS) return fallback;
   const solar = weather.solarDays.find(day => day.date === locationDate(now, weather.timezone));
   if (!solar) return fallback;

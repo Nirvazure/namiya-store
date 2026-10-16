@@ -2,9 +2,11 @@ import { getSystemShop, type Shop } from "@/domain/shops";
 import { api } from "@/services/api/client";
 
 export function shopPath(id: string) { return `/shop/${encodeURIComponent(id)}`; }
+export function decorationPath(id: string) { return `${shopPath(id)}/decorate`; }
+export function isDecorationPath(path: string) { return /^\/shop\/[^/]+\/decorate\/?$/.test(path); }
 export function shopIdFromPath(path: string): string | null {
   if (path === "/") return "grandpa";
-  const match = /^\/shop\/([^/]+)\/?$/.exec(path);
+  const match = /^\/shop\/([^/]+)(?:\/decorate)?\/?$/.exec(path);
   if (!match) return null;
   try { return decodeURIComponent(match[1]); } catch { return null; }
 }

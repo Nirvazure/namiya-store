@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { locatePosition, watchSceneEnvironment } from '../services/scene/environment.ts';
 import { parsePlaceName } from '../domain/place.ts';
+import { fixedShopLocation, officialShopLocation } from '../domain/sceneLocation.ts';
 
 const now = Date.parse('2026-10-15T12:00:00+08:00');
 const weather = {
@@ -10,6 +11,58 @@ const weather = {
   solarDays: [{ date: '2026-10-15', sunrise: now - 6 * 3600_000, sunset: now + 6 * 3600_000 }],
 };
 const flush = async () => { for (let i = 0; i < 12; i++) await Promise.resolve(); };
+
+test('only the official shop uses Bungotakada, not personal shops using its template', () => {
+  assert.equal(fixedShopLocation({ id: 'grandpa', kind: 'system' }), officialShopLocation);
+  assert.equal(fixedShopLocation({ id: 'my-shop', kind: 'human' }), undefined);
+  assert.equal(fixedShopLocation({ id: 'grandpa', kind: 'human' }), undefined);
+  assert.equal(fixedShopLocation({ id: 'sashimi', kind: 'demo' }), undefined);
+});
+
+test('official location requests Japanese weather without reverse geocoding and keeps Tokyo time offline', async t => {
+  browser(t);
+  const urls = [];
+  t.mock.method(globalThis, 'fetch', async url => {
+    urls.push(url);
+    return new Response('', { status: 502 });
+  });
+  const states = [];
+  const stop = watchSceneEnvironment(state => states.push(state), Promise.resolve(officialShopLocation));
+  await flush();
+  assert.equal(urls.length, 1);
+  const params = new URL(urls[0], 'https://namiya.example').searchParams;
+  assert.equal(params.get('latitude'), '33.55');
+  assert.equal(params.get('longitude'), '131.433333');
+  assert.equal(states.at(-1).placeName, '日本大分县丰后高田市');
+  assert.equal(states.at(-1).localTime, '13:00');
+  assert.equal(states.at(-1).timeSource, '当地时间');
+  assert.equal(states.at(-1).live, false);
+  stop();
+});
+
+test('switching to the official shop cancels old location responses', async t => {
+  browser(t);
+  const pending = [];
+  t.mock.method(globalThis, 'fetch', async (url, { signal }) => {
+    if (url.includes('latitude=33.55')) return Response.json({ ...weather, timezone: 'Asia/Tokyo' });
+    return new Promise(resolve => pending.push({ resolve, signal }));
+  });
+  const states = [];
+  const oldStop = watchSceneEnvironment(state => states.push(state), Promise.resolve({ latitude: 31, longitude: 121 }));
+  await flush();
+  oldStop();
+  const stop = watchSceneEnvironment(state => states.push(state), Promise.resolve(officialShopLocation));
+  await flush();
+  pending.forEach(({ resolve, signal }) => {
+    assert.equal(signal.aborted, true);
+    resolve(Response.json({ ...weather, city: '杭州市', locality: '西湖区' }));
+  });
+  await flush();
+  assert.equal(states.at(-1).placeName, officialShopLocation.placeName);
+  assert.equal(states.at(-1).localTime, '13:00');
+  assert.equal(states.at(-1).condition, 'rain');
+  stop();
+});
 
 function browser(t) {
   const document = new EventTarget();

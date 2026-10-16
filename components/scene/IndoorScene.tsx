@@ -26,10 +26,11 @@ type Props = {
   onWrite: () => void;
   onEditLetter: () => void;
   onConversationChange: (open: boolean) => void;
+  onDecorate?: () => void;
 };
 type Conversation = { counter: CounterId; kind: "talk" | "menu"; line: number };
 
-export function IndoorScene({ shop = defaultShop, active, blocked, envelopeReady, onExit, onWrite, onEditLetter, onConversationChange }: Props) {
+export function IndoorScene({ shop = defaultShop, active, blocked, envelopeReady, onExit, onWrite, onEditLetter, onConversationChange, onDecorate }: Props) {
   const root = useRef<HTMLElement>(null);
   const dialogBox = useRef<HTMLDivElement>(null);
   const moveScene = useRef<(x: number, y: number) => void>(() => {});
@@ -101,8 +102,8 @@ export function IndoorScene({ shop = defaultShop, active, blocked, envelopeReady
     <div className="indoor-content" inert={Boolean(conversation)}>
       <header className="indoor-header">
         <button data-indoor-exit className="indoor-back" type="button" onClick={onExit} disabled={blocked}><ArrowLeft size={18} /><span>返回店门前</span></button>
-        <p className="indoor-wordmark">{shop.name}<span>在这里，慢一点</span></p>
-
+        <p className="indoor-wordmark"><span className="indoor-shop-name">{shop.name}</span><span className="indoor-tagline">在这里，慢一点</span></p>
+        {shop.isOwner && onDecorate && <button className="indoor-decorate" type="button" disabled={blocked} onClick={onDecorate}>装饰小店</button>}
       </header>
       <div className="indoor-scroller indoor-scroll-paused" aria-label="当前小店的室内场景">
         <article className={`indoor-panel indoor-panel-${counter.id}`}>

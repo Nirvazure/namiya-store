@@ -24,6 +24,7 @@ export type Shop = {
   isFavorite?: boolean;
   scenes: ScenePair;
   isOwner?: boolean;
+  appearance?: { showForegroundPlants: boolean };
 };
 export type ShopDraft = {
   name: string;
@@ -32,6 +33,7 @@ export type ShopDraft = {
   musicTrackId: string;
   acceptingLetters: boolean;
   scenes: { outdoor: SceneAsset | null; indoor: SceneAsset | null };
+  appearance?: { showForegroundPlants: boolean };
 };
 export type MyShopResponse = { shop: Shop | null; draft: ShopDraft | null };
 export type CurrentUser = { id: string; displayName: string; avatarUrl?: string | null };

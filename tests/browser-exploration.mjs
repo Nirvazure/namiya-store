@@ -27,6 +27,7 @@ try {
       if (url.pathname === "/api/shops") return json({ shops: other.isOpen && other.discoverable ? [other] : [], nextCursor: null });
       if (url.pathname === "/api/shops/favorites") return json({ shops: favorite ? [{ ...other, isFavorite: true }] : [], nextCursor: null });
       if (url.pathname === "/api/shops/mine/settings") { Object.assign(my, route.request().postDataJSON()); return json({ shop: { ...my, isOwner: true } }); }
+      if (url.pathname === "/api/shops/mine/decoration") return json({ shop: { ...my, isOwner: true }, revision: 0, onboardedAt: "2026-10-16T00:00:00.000Z" });
       if (url.pathname.endsWith("/favorite")) { favorite = method === "PUT"; return json({ isFavorite: favorite }); }
       if (url.pathname === `/api/shops/${my.id}`) return json({ shop: { ...my, isOwner: signedIn } });
       if (url.pathname === `/api/shops/${other.id}`) return json({ shop: { ...other, isOwner: false, isFavorite: favorite } });
@@ -57,9 +58,9 @@ try {
     await page.getByRole("button", { name: "发现下一家小店" }).click();
     await page.waitForURL(`**/shop/${other.id}`);
     await page.goBack(); await page.waitForURL(`**/shop/${my.id}`);
-    await page.locator(".world-shop-card strong").filter({ hasText: my.name }).waitFor();
+    await page.locator(".personal-shop-sign").filter({ hasText: my.name }).waitFor();
     await page.goForward(); await page.waitForURL(`**/shop/${other.id}`);
-    await page.locator(".world-shop-card strong").filter({ hasText: other.name }).waitFor();
+    await page.locator(".personal-shop-sign").filter({ hasText: other.name }).waitFor();
     await page.getByRole("button", { name: "收藏这家店", exact: true }).click();
     await page.getByRole("button", { name: "取消收藏这家店", exact: true }).waitFor();
     await page.locator("#scene-mailbox").click();

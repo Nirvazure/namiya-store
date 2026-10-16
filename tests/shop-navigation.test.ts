@@ -1,13 +1,17 @@
 import { afterEach, expect, it, vi } from "vitest";
 const request = vi.hoisted(() => vi.fn());
 vi.mock("@/services/api/client", () => ({ api: request }));
-import { loadShopDestination, shopIdFromPath, shopPath } from "@/services/shops/navigation";
+import { decorationPath, isDecorationPath, loadShopDestination, shopIdFromPath, shopPath } from "@/services/shops/navigation";
 afterEach(() => { vi.unstubAllGlobals(); request.mockReset(); });
 it("uses singular encoded routes and recognizes a direct URL", () => {
   expect(shopPath("some id")).toBe("/shop/some%20id");
   expect(shopIdFromPath("/shop/some%20id")).toBe("some id");
   expect(shopIdFromPath("/")).toBe("grandpa");
   expect(shopIdFromPath("/elsewhere")).toBeNull();
+  expect(decorationPath("some id")).toBe("/shop/some%20id/decorate");
+  expect(shopIdFromPath("/shop/some%20id/decorate")).toBe("some id");
+  expect(isDecorationPath("/shop/some%20id/decorate")).toBe(true);
+  expect(isDecorationPath("/shop/some%20id")).toBe(false);
 });
 it("loads only the destination exterior before returning it", async () => {
   const { defaultShop } = await import("@/domain/shops");

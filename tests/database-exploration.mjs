@@ -33,8 +33,10 @@ try {
   await client.query(`INSERT INTO namiya_store.shops(id,"ownerId",published,"publishedAt",draft,"updatedAt") VALUES('legacy',$1,$2,NOW(),$3,NOW())`, [owner, { ...defaultShop, acceptingLetters: false }, { name: "未发布的私有草稿" }]);
   await client.query(`INSERT INTO namiya_store.shops(id,"ownerId",draft,"updatedAt") VALUES('draft-only',$1,$2,NOW())`, [other, { ...defaultShop, name: "私有布置草稿", acceptingLetters: false }]);
   await client.query(await readFile("prisma/migrations/20261016000000_shop_exploration/migration.sql", "utf8"));
+  await client.query(await readFile("prisma/migrations/20261016010000_shop_decoration/migration.sql", "utf8"));
   const backfill = (await client.query(`SELECT * FROM namiya_store.shops WHERE id='legacy'`)).rows[0];
   assert.equal(backfill.acceptingLetters, false); assert.equal(backfill.discoverable, true); assert.equal(backfill.draft.name, "未发布的私有草稿");
+  assert.equal(backfill.decorationOnboardedAt, null);
   passed.push("initial plus additive migration, published receiving backfill and draft retention");
   // The actual generated local password is held only in this process.
   const localConfig = client.connectionParameters;
@@ -88,5 +90,48 @@ try {
   await prisma.shop.delete({ where: { id: "candidate-0" } });
   assert.equal(await prisma.shopFavorite.count({ where: { shopId: "candidate-0" } }), 0);
   passed.push("seeded real SQL pagination is stable and nonoverlapping; publishing retains settings; shop deletion cascades favorites");
+  const { readDecoration, updateDecoration } = await import("../lib/server/shop-decoration.ts");
+  const { saveDraft, publishedShop } = await import("../lib/server/shops.ts");
+  const beforeDecoration = await readDecoration(owner, "legacy");
+  assert.equal(beforeDecoration.onboardedAt, null);
+  const skipped = await updateDecoration(owner, { action: "skip", shopId: "legacy" });
+  assert.ok(skipped.onboardedAt); assert.deepEqual(skipped.shop.scenes, beforeDecoration.shop.scenes);
+  const skippedAgain = await updateDecoration(owner, { action: "skip", shopId: "legacy" });
+  assert.equal(skippedAgain.revision, skipped.revision);
+  assert.equal(skippedAgain.onboardedAt, skipped.onboardedAt);
+  await assert.rejects(readDecoration(visitor, "legacy"), error => error.status === 403);
+  await assert.rejects(updateDecoration(visitor, { action: "skip", shopId: "legacy" }), error => error.status === 403);
+  assert.ok(!JSON.stringify(publishedShop(await prisma.shop.findUnique({ where: { id: "legacy" } }))).includes("onboarded"));
+  passed.push("decoration migration preserves old shops; persistent skip is idempotent; owner checks and private metadata verified");
+  const draft = { ...defaultShop, name: "之前未发布的名字", scenes: { ...defaultShop.scenes } };
+  await saveDraft(owner, draft);
+  const currentDecoration = await readDecoration(owner, "legacy");
+  const settings = { name: "本地装饰测试", description: "装饰后的介绍", signStyle: "paper", musicTrackId: "store-lamp", showForegroundPlants: false, themeId: "dessert" };
+  const race = await Promise.allSettled([
+    updateDecoration(owner, { action: "save", shopId: "legacy", revision: currentDecoration.revision, settings }),
+    updateDecoration(owner, { action: "save", shopId: "legacy", revision: currentDecoration.revision, settings: { ...settings, themeId: "matcha" } }),
+  ]);
+  assert.equal(race.filter(item => item.status === "fulfilled").length, 1);
+  assert.equal(race.filter(item => item.status === "rejected" && item.reason.status === 409).length, 1);
+  const winner = race.find(item => item.status === "fulfilled").value;
+  const afterPublish = await publishShop(owner);
+  assert.equal(afterPublish.scenes.indoor.templateId, winner.shop.scenes.indoor.templateId);
+  assert.equal(afterPublish.name, settings.name); assert.equal(afterPublish.appearance.showForegroundPlants, false);
+  assert.deepEqual(afterPublish.scenes.outdoor, currentDecoration.shop.scenes.outdoor);
+  assert.equal(afterPublish.discoverable, false); assert.equal(afterPublish.acceptingLetters, true);
+  const completed = await readDecoration(owner, "legacy");
+  assert.equal(completed.onboardedAt, skipped.onboardedAt);
+  passed.push("real concurrent decoration saves have one winner; draft publishing retains decoration; exterior, operating settings and onboarding are preserved");
   console.log(JSON.stringify({ passed }, null, 2));
-} finally { await prisma?.$disconnect(); await client?.end(); await postgres.stop(); }
+} finally {
+  await prisma?.$disconnect(); await client?.end();
+  const stopping = postgres.stop();
+  // Windows taskkill may not be available in the test sandbox. Terminate only this disposable cluster.
+  if (process.platform === "win32") {
+    const pid = Number((await readFile(join(directory, "postmaster.pid"), "utf8").catch(() => "")).split(/\r?\n/)[0]);
+    if (Number.isSafeInteger(pid) && pid > 0) {
+      try { process.kill(pid); } catch (error) { if (error.code !== "ESRCH") throw error; }
+    }
+  }
+  await stopping;
+}

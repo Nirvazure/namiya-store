@@ -44,6 +44,17 @@ try {
     await page.waitForURL("**/shop/sashimi");
     await page.locator(".world-stage").focus(); await page.keyboard.press("ArrowLeft");
     await page.waitForURL("**/shop/grandpa");
+    await page.locator(".world-stage").focus(); await page.keyboard.press("ArrowDown");
+    await page.waitForURL("**/shop/sashimi");
+    await page.locator(".world-stage").focus(); await page.keyboard.press("ArrowUp");
+    await page.waitForURL("**/shop/grandpa");
+    await page.locator(".world-stage").focus(); await page.keyboard.press("Control+ArrowDown");
+    assert.equal(new URL(page.url()).pathname, "/shop/grandpa");
+    await page.locator("#scene-mailbox").click();
+    await page.locator(".letter-sheet textarea").fill("方向键仍可用于编辑信件。");
+    await page.keyboard.press("ArrowDown"); await page.keyboard.press("ArrowUp");
+    assert.equal(new URL(page.url()).pathname, "/shop/grandpa");
+    await page.getByRole("button", { name: "收起信纸，保留草稿" }).click();
     const drag = async (selector, from, to, pointerType = "mouse") => {
       await page.locator(selector).evaluate((node, { from, to, pointerType }) => {
         const event = (type, x) => node.dispatchEvent(new PointerEvent(type, { bubbles: true, pointerId: 1, isPrimary: true, pointerType, button: 0, clientX: x, clientY: 120 }));

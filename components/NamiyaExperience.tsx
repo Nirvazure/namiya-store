@@ -19,24 +19,29 @@ import { deliverPreparedLetter } from "@/services/letters/deliverLetter";
 import { preloadIndoorEntry } from "@/services/scene/preloadIndoor";
 import { api, ApiError, errorMessage } from "@/services/api/client";
 import { prepareLogin } from "@/services/auth/login";
-import { loadShopDestination, preloadExterior, shopPath } from "@/services/shops/navigation";
+import { decorationPath, loadShopDestination, preloadExterior, shopPath } from "@/services/shops/navigation";
+import type { DecorationResponse } from "@/domain/decoration";
 import { DiscoveryQueue, ShopTrail } from "@/services/shops/exploration";
 import { defaultShop, getSystemShop, type Shop } from "@/domain/shops";
 import { useAppStore } from "@/store/useAppStore";
 import { useLetterStore } from "@/store/useLetterStore";
 import { useMusicStore } from "@/store/useMusicStore";
 import { useCompanionStore } from "@/store/useCompanionStore";
+import { useIndoorStore } from "@/store/useIndoorStore";
 import "@/components/shops/world-navigation.css";
 import "@/components/letter/mailbox.css";
 
 const loadIndoor = () => import("@/components/scene/IndoorScene");
 const IndoorScene = dynamic(() => loadIndoor().then(module => module.IndoorScene));
+const ShopDecoration = dynamic(() => import("@/components/shops/ShopDecoration").then(module => module.ShopDecoration), {
+  loading: () => <p className="world-notice" role="status">正在打开装饰手册…</p>,
+});
 const ThreadMailbox = dynamic(() => import("@/components/letter/ThreadMailbox").then(module => module.ThreadMailbox), {
   loading: () => <p className="world-notice" role="status">正在打开自己的信箱…</p>,
 });
 
 type Panel = "account" | "mail" | "login";
-export function NamiyaExperience({ initialShopId = "grandpa" }: { initialShopId?: string }) {
+export function NamiyaExperience({ initialShopId = "grandpa", decorating = false }: { initialShopId?: string; decorating?: boolean }) {
   const session = useShopSession();
   const { user, ready: sessionReady } = session;
   const syncShop = session.syncShop;
@@ -73,8 +78,9 @@ export function NamiyaExperience({ initialShopId = "grandpa" }: { initialShopId?
   const flowState = useLetterStore(state => state.flowState);
   const error = useLetterStore(state => state.error);
   const letterOpen = ["letterWriting", "characterSelecting", "privacySelecting", "replyReading"].includes(flowState);
-  const blocked = Boolean(panel) || letterOpen || transitioning || navigationBusy;
+  const blocked = Boolean(panel) || letterOpen || transitioning || navigationBusy || decorating;
   const companionHidden = blocked || flowState === "delivering" || (location === "inside" && conversationOpen);
+  const decorationChecked = useRef(new Set<string>());
 
   useEffect(() => {
     alive.current = true; useAppStore.getState().hydrate();
@@ -208,13 +214,42 @@ export function NamiyaExperience({ initialShopId = "grandpa" }: { initialShopId?
   function prepareEntry() {
     return Promise.all([preloadIndoorEntry(shop), loadIndoor()]);
   }
+  function openDecoration() {
+    if (!shop.isOwner || blocked || flowState === "delivering") return;
+    useCompanionStore.getState().close();
+    window.history.pushState(null, "", decorationPath(shop.id));
+  }
+  function finishDecoration(updated: Shop) {
+    if (useLetterStore.getState().userId !== userId || updated.id !== initialShopId) return;
+    decorationChecked.current.add(`${userId}:${updated.id}`);
+    shopVersion.current++;
+    current.current = { shop: updated, resolved: true, userId };
+    setShop(updated); syncShop(updated); setResolved(true);
+    useLetterStore.getState().setContext(userId, updated);
+    useIndoorStore.getState().reset();
+    setConversationOpen(false); setHasEntered(true); setLocation("inside");
+    window.history.replaceState(null, "", shopPath(updated.id));
+    requestAnimationFrame(() => document.querySelector<HTMLElement>("#indoor-scene")?.focus({ preventScroll: true }));
+  }
   async function changeScene(next: "outside" | "inside") {
     if (transitionLock.current || next === location || blocked || flowState === "delivering") return;
     if (next === "inside" && !shop.isOpen && !shop.isOwner) { setNotice("店主暂时关店，改天再来坐坐吧。"); return; }
     useCompanionStore.getState().close(); transitionLock.current = true; setTransitioning(true); setEntryError(undefined);
     if (next === "inside") {
-      try { await prepareEntry(); }
-      catch { if (alive.current) { setEntryError("店里的图片还没准备好，请再试一次。"); setTransitioning(false); transitionLock.current = false; } return; }
+      try {
+        if (shop.isOwner && !decorationChecked.current.has(`${userId}:${shop.id}`)) {
+          const identity = userId, target = shop.id;
+          const data = await api<DecorationResponse>(`/api/shops/mine/decoration?shopId=${encodeURIComponent(target)}`);
+          if (!alive.current || useLetterStore.getState().userId !== identity || current.current.shop.id !== target) { setTransitioning(false); transitionLock.current = false; return; }
+          if (!data.onboardedAt) {
+            window.history.pushState(null, "", decorationPath(target));
+            setTransitioning(false); transitionLock.current = false; return;
+          }
+          decorationChecked.current.add(`${identity}:${target}`);
+        }
+        await prepareEntry();
+      }
+      catch (failure) { if (alive.current) { setEntryError(errorMessage(failure)); setTransitioning(false); transitionLock.current = false; } return; }
       if (!alive.current) return;
       setHasEntered(true);
     }
@@ -283,22 +318,21 @@ export function NamiyaExperience({ initialShopId = "grandpa" }: { initialShopId?
       if (!publicShop.isOpen) { setLocation("outside"); setHasEntered(false); }
     } catch (error) { setAccountError(errorMessage(error)); }
   }
-  return <main className="namiya-world" id="street">
+  return <><main className="namiya-world" id="street" hidden={decorating} inert={decorating}>
     <div inert={Boolean(panel && panel !== "account") || letterOpen || flowState === "delivering"}>
       <WorldAccount user={user} own={session.own} ready={sessionReady} open={panel === "account"} busy={settingsBusy} error={accountError || session.initializationError} onToggle={() => { useCompanionStore.getState().close(); setPanel(user ? panel === "account" ? undefined : "account" : "login"); }} onClose={() => setPanel(undefined)} onSignOut={() => void signOut()} onRetry={() => void session.refreshSession()} onSettings={settings => void saveSettings(settings)} />
     </div>
     <div inert={blocked || flowState === "delivering"}><ShopAnchors user={user} own={session.own} current={shop} favorites={session.favorites} unread={session.unread} hasMore={Boolean(session.favoriteCursor)} onVisit={id => void visit(id)} onLogin={() => user ? void session.refreshSession() : setPanel("login")} onMore={() => void session.moreFavorites().catch(error => setNotice(errorMessage(error)))} /></div>
     {notice && !panel && !letterOpen && <p className="world-notice" role="status">{notice}<button type="button" onClick={() => setNotice("")} aria-label="收起提示"> ×</button></p>}
     {!resolved ? <div className="world-route-error" role="status"><p>{routeFailure || "正在寻找那家小店…"}</p>{routeFailure && <button type="button" onClick={() => setRouteRetry(value => value + 1)}>重新寻找</button>}</div> : <>
-      <div className={`scene-layer world-stage ${!shop.isOpen ? "shop-closed" : ""}`} data-direction={hopDirection} hidden={location !== "outside"} inert={location !== "outside" || blocked} tabIndex={0} role="group" aria-label="左右逛店场景，方向键或滑动切换" {...swipe}>
+      <div className={`scene-layer world-stage ${!shop.isOpen ? "shop-closed" : ""}`} data-direction={hopDirection} hidden={location !== "outside"} inert={location !== "outside" || blocked} tabIndex={0} role="group" aria-label="逛店场景，上或左键返回，下或右键前进，也可左右滑动切换" {...swipe}>
         <ExteriorScene key={shop.id} shop={shop} flowState={flowState} hasReply={Boolean(shop.isOwner && session.unread)} error={error} onOpenMailbox={openMailbox} onEditLetter={openLetter} onEnter={() => void changeScene("inside")} onPrepareEntry={() => { if (shop.isOpen || shop.isOwner) void prepareEntry().catch(() => {}); }} entering={transitioning} entryError={entryError} />
         {!shop.isOpen && <div className="closed-shop-status" role="status"><strong>暂时关店</strong><small>{shop.isOwner ? "门口的信箱仍为你留着。" : "灯歇一会儿，已有往来仍可继续。"}</small></div>}
       </div>
-      {hasEntered && <div className="scene-layer" hidden={location !== "inside"} inert={location !== "inside" || blocked}><IndoorScene key={shop.id} shop={shop} active={location === "inside"} blocked={blocked} envelopeReady={flowState === "envelopeReady"} onExit={() => void changeScene("outside")} onWrite={openLetter} onEditLetter={openLetter} onConversationChange={setConversationOpen} /></div>}
-      {location === "outside" && <div className="world-shop-card" inert={blocked || flowState === "delivering"}><div><strong>{shop.name}</strong><small>{shop.isOwner ? "你的灯下" : `${shop.ownerDisplayName}的灯下`}{!shop.isOpen ? " · 暂时关店" : !shop.acceptingLetters ? " · 暂停新信" : ""}</small></div>{shop.kind === "human" && !shop.isOwner && <button className="world-favorite" type="button" disabled={favoriteBusy} onClick={() => void toggleFavorite()} aria-label={shop.isFavorite ? "取消收藏这家店" : "收藏这家店"} aria-pressed={Boolean(shop.isFavorite)}><Heart size={21} weight={shop.isFavorite ? "fill" : "regular"} /></button>}</div>}
-      {location === "outside" && <nav className="world-roam" aria-label="左右逛店"><button type="button" aria-label="返回上一家小店" disabled={!canPrevious || blocked || flowState === "delivering"} onClick={() => void hop("previous")}><ArrowLeft size={18} /></button><span>沿着灯光，慢慢逛</span><button type="button" aria-label="发现下一家小店" disabled={blocked || flowState === "delivering"} onClick={() => void hop("next")}><ArrowRight size={18} /></button></nav>}
+      {hasEntered && <div className="scene-layer" hidden={location !== "inside"} inert={location !== "inside" || blocked}><IndoorScene key={`${shop.id}:${shop.scenes.indoor.templateId ?? shop.scenes.indoor.src}`} shop={shop} active={location === "inside" && !decorating} blocked={blocked} envelopeReady={flowState === "envelopeReady"} onExit={() => void changeScene("outside")} onWrite={openLetter} onEditLetter={openLetter} onConversationChange={setConversationOpen} onDecorate={openDecoration} /></div>}
+      {location === "outside" && shop.kind === "human" && !shop.isOwner && <div className="world-shop-card" inert={blocked || flowState === "delivering"}><button className="world-favorite" type="button" disabled={favoriteBusy} onClick={() => void toggleFavorite()} aria-label={shop.isFavorite ? "取消收藏这家店" : "收藏这家店"} aria-pressed={Boolean(shop.isFavorite)}><Heart size={21} weight={shop.isFavorite ? "fill" : "regular"} /></button></div>}
+      {location === "outside" && <nav className="world-roam" aria-label="左右逛店"><button type="button" aria-label="返回上一家小店" disabled={!canPrevious || blocked || flowState === "delivering"} onClick={() => void hop("previous")}><ArrowLeft size={18} /></button><button type="button" aria-label="发现下一家小店" disabled={blocked || flowState === "delivering"} onClick={() => void hop("next")}><ArrowRight size={18} /></button></nav>}
     </>}
-    {navigationBusy && <p className="world-notice" role="status">正在走向下一盏灯…</p>}
     <div className={`scene-transition ${transitioning ? "is-busy" : ""}`} ref={transitionLayer} aria-hidden="true" />
     <LetterPanel />
     {flowState === "delivering" && flight && <DeliveryAnimation flight={flight} />}
@@ -306,5 +340,5 @@ export function NamiyaExperience({ initialShopId = "grandpa" }: { initialShopId?
     {panel === "login" && <ShopDialog title="让心事有处寄达" eyebrow="使用你已有的 YQYHub 账号" onClose={() => setPanel(undefined)}><p className="shop-intro">登录后会为你留一家小店。在别人的灯下寄信，回自己的店里收信。</p>{!session.configured && <p className="mail-error" role="status">账号服务暂时没有连接好，稍后再来试试。草稿已留在这台设备。</p>}<button type="button" className="shop-primary" disabled={!session.configured} onClick={() => prepareLogin()}>使用 GitHub 登录</button></ShopDialog>}
     <MusicDock outside={location === "outside"} hidden={companionHidden} />
     <FocusBookmark outside={location === "outside"} hidden={companionHidden} />
-  </main>;
+  </main>{decorating && <ShopDecoration key={`${initialShopId}:${userId}`} shopId={initialShopId} userId={userId} sessionReady={sessionReady} onDone={finishDecoration} onLeave={() => window.history.replaceState(null, "", shopPath(initialShopId))} />}</>;
 }

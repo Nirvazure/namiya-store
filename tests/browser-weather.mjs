@@ -19,9 +19,9 @@ function observe(page) {
 }
 
 function fixture(time, weatherCode) {
-  const now = Date.parse(`2026-10-15T${time}:00+08:00`);
-  return { weatherCode, temperature: 18, timezone: 'Asia/Shanghai', isDay: time >= '06:00' && time < '18:00', observedAt: now, fetchedAt: now,
-    solarDays: [{ date: '2026-10-15', sunrise: Date.parse('2026-10-15T06:00:00+08:00'), sunset: Date.parse('2026-10-15T18:00:00+08:00') }] };
+  const now = Date.parse(`2026-10-15T${time}:00+09:00`);
+  return { weatherCode, temperature: 18, timezone: 'Asia/Tokyo', isDay: time >= '06:00' && time < '18:00', observedAt: now, fetchedAt: now,
+    solarDays: [{ date: '2026-10-15', sunrise: Date.parse('2026-10-15T06:00:00+09:00'), sunset: Date.parse('2026-10-15T18:00:00+09:00') }] };
 }
 
 async function capture(page, name) {
@@ -55,7 +55,8 @@ try {
       }, { phase, condition });
       assert.equal(await page.locator('.scene-local-time').evaluate(el => el.tagName), 'P');
       assert.equal(await page.locator('.ambience-toggle').count(), 0);
-      assert.equal(await page.evaluate(() => window.locationRequests), 1, 'Strict Mode must not request location twice');
+      assert.equal(await page.evaluate(() => window.locationRequests), 0, 'Official shop must not request visitor location');
+      assert.equal(await page.locator('.scene-place-name').textContent(), '日本大分县丰后高田市');
       for (const layer of ['.weather-wash', '.weather-mist', '.weather-precipitation']) {
         assert.equal(await page.locator(layer).evaluate(el => getComputedStyle(el).pointerEvents), 'none');
       }
@@ -103,12 +104,14 @@ try {
   await denied.route('**/api/me', route => route.fulfill({ json: { user: null, configured: false, myShopId: null } }));
   await denied.route('**/api/shops', route => route.fulfill({ json: { shops: [], nextCursor: null } }));
   await fallback.clock.setSystemTime(Date.parse('2026-10-15T19:30:00+08:00'));
-  await fallback.route('**/api/weather?**', () => { throw new Error('Denied location must not request weather'); });
+  await fallback.route('**/api/weather?**', route => route.fulfill({ status: 502, json: { error: 'Weather unavailable' } }));
   await fallback.goto(origin, { waitUntil: 'networkidle' });
-  await fallback.waitForFunction(() => document.querySelector('.scene-local-time')?.textContent.includes('夜晚 · 本地时间'));
-  assert.equal(await fallback.locator('.scene-data-credit').count(), 0);
+  await fallback.waitForFunction(() => document.querySelector('.scene-local-time')?.textContent.includes('夜晚 · 当地时间'));
+  assert.equal(await fallback.locator('.scene-place-name').textContent(), '日本大分县丰后高田市');
+  assert.match(await fallback.locator('.scene-local-time').textContent(), /20:30/);
+  assert.equal(await fallback.locator('.scene-data-credit a').count(), 0);
   await capture(fallback, 'mobile-location-denied');
-  passed.push('denied location uses local device time');
+  passed.push('official shop retains Bungotakada and Tokyo time without GPS or weather');
   await denied.close();
 
   assert.deepEqual(errors, [], 'Browser must not have runtime or hydration errors');

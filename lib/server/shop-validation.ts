@@ -7,6 +7,7 @@ export const draftSchema = z.object({
   name: z.string().trim().max(30), description: z.string().trim().max(240),
   signStyle: z.enum(["wood", "paper", "moss"]), musicTrackId: z.enum(["rain-radio", "store-lamp"]), acceptingLetters: z.boolean(),
   scenes: z.object({ outdoor: scene.nullable(), indoor: scene.nullable() }),
+  appearance: z.object({ showForegroundPlants: z.boolean() }).optional(),
 });
 
 // Templates are an allowlist, never accept a caller-supplied fetch URL or path.
