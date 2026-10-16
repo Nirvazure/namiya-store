@@ -26,6 +26,7 @@ model Shop {
   acceptingLetters Boolean @default(true)
   ownerDisplayName String @default("旅人")
   ownerAvatarUrl String?
+  decorationOnboardedAt DateTime?
   draft Json?
   published Json?
   publishedAt DateTime?

@@ -16,7 +16,7 @@ export function publishedShop(record: ShopRecord, isOwner = false): Shop | null 
     musicTrackId: published.musicTrackId, acceptingLetters: record.acceptingLetters ?? published.acceptingLetters,
     isOpen: record.isOpen ?? true, discoverable: record.discoverable ?? true,
     ownerDisplayName: record.ownerDisplayName ?? "旅人", ownerAvatarUrl: record.ownerAvatarUrl ?? null,
-    scenes: published.scenes, isOwner };
+    scenes: published.scenes, appearance: { showForegroundPlants: published.appearance?.showForegroundPlants ?? true }, isOwner };
 }
 export async function findShop(id: string, viewerId?: string): Promise<Shop> {
   const system = getSystemShop(id);

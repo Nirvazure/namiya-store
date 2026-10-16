@@ -37,7 +37,7 @@ function LayeredExteriorScene({ shop = defaultShop, flowState, hasReply, error, 
   const root = useRef<HTMLElement>(null);
   const mailbox = useRef<HTMLButtonElement>(null);
   const moveScene = useRef<(x: number, y: number) => void>(() => {});
-  const environment = useSceneEnvironment();
+  const environment = useSceneEnvironment(shop);
   const phase = environment?.phase ?? "pending";
   const condition = environment?.condition ?? "unknown";
   const ready = flowState === "envelopeReady";
@@ -108,7 +108,7 @@ function LayeredExteriorScene({ shop = defaultShop, flowState, hasReply, error, 
         <div className="scene-calendar-placement"><StreetCalendar date={environment?.localDate} /></div>
         {hasReply && <p className="scene-reply-reminder">邮箱里，多了一封回信。</p>}
         <button className="scene-write-link" onClick={onEnter} onPointerEnter={onPrepareEntry} onFocus={onPrepareEntry} disabled={delivering || entering || (!shop.isOpen && !shop.isOwner)} type="button">{!shop.isOpen && !shop.isOwner ? "暂时关店" : entering ? "正在开门…" : "推门进店"}<ArrowRight size={17} /></button>
-        {(environment?.live || environment?.placeName) && <p className="scene-data-credit">{environment.live && <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">天气 · Open-Meteo</a>}{environment.placeName && <a href="https://www.bigdatacloud.com/" target="_blank" rel="noreferrer">地点 · BigDataCloud</a>}</p>}
+        {(environment?.live || environment?.placeName) && <p className="scene-data-credit">{environment.live && <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">天气 · Open-Meteo</a>}{environment.placeName && shop.id !== "grandpa" && <a href="https://www.bigdatacloud.com/" target="_blank" rel="noreferrer">地点 · BigDataCloud</a>}</p>}
       </div>
 
       <div className="distant-shop distant-shop-left" data-depth="-4" aria-hidden="true"><Image src={`${assets}building.webp`} alt="" fill sizes="35vw" /></div>
@@ -128,7 +128,7 @@ function LayeredExteriorScene({ shop = defaultShop, flowState, hasReply, error, 
         </div></div>
       </div>
 
-      <div className="foreground-plant" data-depth="58" aria-hidden="true"><Image src={`${assets}foreground-grass.webp`} alt="" fill sizes="28vw" /></div>
+      {(shop.appearance?.showForegroundPlants ?? true) && <div className="foreground-plant" data-depth="58" aria-hidden="true"><Image src={`${assets}foreground-grass.webp`} alt="" fill sizes="28vw" /></div>}
       <div className="mailbox-position" data-depth="42">
         <button className={`watercolor-mailbox ${hasReply ? "mailbox-has-reply" : ""}`} ref={mailbox} id="scene-mailbox" aria-label={mailboxLabel} aria-busy={delivering} disabled={delivering} onClick={onOpenMailbox} type="button">
           <Image src={`${assets}mailbox.webp`} alt="" width={600} height={900} sizes="(max-width: 700px) 140px, 18vw" />
@@ -147,7 +147,7 @@ function LayeredExteriorScene({ shop = defaultShop, flowState, hasReply, error, 
 }
 
 function ImageExteriorScene({ shop = defaultShop, flowState, hasReply, error, onOpenMailbox, onEditLetter, onEnter, onPrepareEntry, entering, entryError }: Props) {
-  const environment = useSceneEnvironment();
+  const environment = useSceneEnvironment(shop);
   const mailbox = useRef<HTMLButtonElement>(null);
   const ready = flowState === "envelopeReady";
   const delivering = flowState === "delivering";
@@ -167,9 +167,10 @@ function ImageExteriorScene({ shop = defaultShop, flowState, hasReply, error, on
       <div className="scene-calendar-placement"><StreetCalendar date={environment?.localDate} /></div>
       {hasReply && <p className="scene-reply-reminder">邮箱里，多了一封回信。</p>}
       <button className="scene-write-link shop-entry-door" type="button" disabled={entering || delivering || (!shop.isOpen && !shop.isOwner)} onPointerEnter={onPrepareEntry} onFocus={onPrepareEntry} onClick={onEnter}>{!shop.isOpen && !shop.isOwner ? "暂时关店" : entering ? "正在开门…" : "推门进店"}<ArrowRight size={17} /></button>
-      {(environment?.live || environment?.placeName) && <p className="scene-data-credit">{environment.live && <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">天气 · Open-Meteo</a>}{environment.placeName && <a href="https://www.bigdatacloud.com/" target="_blank" rel="noreferrer">地点 · BigDataCloud</a>}</p>}
+      {(environment?.live || environment?.placeName) && <p className="scene-data-credit">{environment.live && <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">天气 · Open-Meteo</a>}{environment.placeName && shop.id !== "grandpa" && <a href="https://www.bigdatacloud.com/" target="_blank" rel="noreferrer">地点 · BigDataCloud</a>}</p>}
     </div>
     <div className="whole-shop-picture"><Image src={shop.scenes.outdoor.src} alt={`${shop.name}的室外门面`} fill unoptimized sizes="(max-width: 700px) 94vw, 65vw" style={sceneImageStyle(shop.scenes.outdoor)} preload /><div className={`personal-shop-sign sign-${shop.signStyle}`}>{shop.name}</div></div>
+    {(shop.appearance?.showForegroundPlants ?? true) && <div className="foreground-plant" aria-hidden="true"><Image src={`${assets}foreground-grass.webp`} alt="" fill sizes="28vw" /></div>}
     <div className="whole-shop-actions"><button ref={mailbox} id="scene-mailbox" type="button" aria-label={shop.isOwner ? "打开自己的信箱" : undefined} onClick={onOpenMailbox} disabled={delivering}><EnvelopeSimple size={19} />{shop.isOwner ? hasReply ? "有未读来信" : "自己的信箱" : !shop.isOpen || !shop.acceptingLetters ? "暂不接收新信" : delivering ? "正在投递…" : ready ? "投递这封信" : "取一张信纸"}</button>{ready && <button type="button" onClick={onEditLetter}>展开修改</button>}</div>
     {error && <p className="whole-shop-status" role="alert">{error}</p>}
     {(entering || entryError) && <p className="scene-entry-status" role={entryError ? "alert" : "status"}>{entryError ?? "正在为你点亮店里的灯…"}</p>}

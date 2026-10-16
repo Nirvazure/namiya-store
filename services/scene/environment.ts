@@ -1,5 +1,6 @@
 import { getSceneEnvironment, WEATHER_REFRESH_MS, type SceneEnvironment, type WeatherSnapshot } from "@/domain/weather";
 import { parsePlaceName } from "@/domain/place";
+import type { SceneLocation } from "@/domain/sceneLocation";
 
 type Coordinates = { latitude: number; longitude: number };
 
@@ -20,7 +21,7 @@ export function locatePosition(geolocation: Geolocation | null = navigator.geolo
 }
 
 // The subscription owns all timers and requests; location is shared across React effect restarts.
-export function watchSceneEnvironment(update: (state: SceneEnvironment) => void, location: Promise<Coordinates | undefined>): () => void {
+export function watchSceneEnvironment(update: (state: SceneEnvironment) => void, location: Promise<SceneLocation | undefined>): () => void {
   let alive = true;
   let coordinates: Coordinates | undefined;
   let weather: WeatherSnapshot | undefined;
@@ -29,7 +30,8 @@ export function watchSceneEnvironment(update: (state: SceneEnvironment) => void,
   let placeRequest: AbortController | undefined;
   let placeStarted = false;
   let placeName: string | undefined;
-  const publish = () => { if (alive) update({ ...getSceneEnvironment(Date.now(), weather), placeName }); };
+  let timezone: string | undefined;
+  const publish = () => { if (alive) update({ ...getSceneEnvironment(Date.now(), weather, timezone), placeName }); };
 
   async function resolvePlace() {
     if (!alive || !coordinates || placeStarted || document.visibilityState === "hidden") return;
@@ -83,7 +85,15 @@ export function watchSceneEnvironment(update: (state: SceneEnvironment) => void,
   }
 
   publish();
-  void location.then(result => { if (alive) { coordinates = result; tick(); } });
+  void location.then(result => {
+    if (alive) {
+      coordinates = result;
+      placeName = result?.placeName;
+      timezone = result?.timezone;
+      placeStarted = Boolean(placeName);
+      tick();
+    }
+  });
   const timer = setInterval(tick, 60_000);
   document.addEventListener("visibilitychange", tick);
   return () => {

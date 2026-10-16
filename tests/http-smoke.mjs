@@ -50,7 +50,9 @@ try {
   }
   const obsolete = await fetch(`${base}/api/letters/reply`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ body: "旧接口不应继续匿名调用AI" }) });
   assert.equal(obsolete.status, 410); checks++;
-  for (const path of ["/api/shops/mine", "/api/threads"]) {
+  const decorator = await fetch(`${base}/shop/grandpa/decorate`);
+  assert.equal(decorator.status, 200); checks++;
+  for (const path of ["/api/shops/mine", "/api/shops/mine/decoration?shopId=grandpa", "/api/threads"]) {
     const response = await fetch(`${base}${path}`);
     assert.ok(response.status === 401 || response.status === 503);
     assert.ok(typeof (await response.json()).error === "string"); checks++;

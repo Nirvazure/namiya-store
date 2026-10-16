@@ -11,6 +11,7 @@ type IndoorState = {
   serve: (counter: CounterId, readyAt: number) => void;
   taste: (counter: CounterId) => void;
   clear: (counter: CounterId) => void;
+  reset: () => void;
 };
 
 export const useIndoorStore = create<IndoorState>((set) => ({
@@ -27,4 +28,5 @@ export const useIndoorStore = create<IndoorState>((set) => ({
     return order ? { orders: { ...state.orders, [counter]: { ...order, phase: "tasted" } } } : state;
   }),
   clear: (counter) => set((state) => ({ orders: { ...state.orders, [counter]: undefined } })),
+  reset: () => set({ currentCounter: "grandpa", orders: {} }),
 }));
