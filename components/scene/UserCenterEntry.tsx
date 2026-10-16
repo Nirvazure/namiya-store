@@ -1,17 +1,18 @@
 "use client";
 
-import { UserCircle } from "@phosphor-icons/react/dist/csr/UserCircle";
-import Image from "next/image";
+import { ShopAvatar } from "@/components/shops/ShopAvatar";
 
 export type UserCenterEntryProps = {
   user?: { nickname: string; avatarUrl?: string };
   onOpenAccount?: () => void;
+  expanded?: boolean;
+  disabled?: boolean;
 };
 
-export function UserCenterEntry({ user, onOpenAccount }: UserCenterEntryProps) {
+export function UserCenterEntry({ user, onOpenAccount, expanded, disabled }: UserCenterEntryProps) {
   const available = Boolean(onOpenAccount);
-  return <button className="user-center-entry" type="button" disabled={!available} onClick={onOpenAccount} aria-label={available ? `${user?.nickname ?? "用户中心"}，打开账号中心` : "用户中心，暂未开放"} title={available ? "打开用户中心" : "用户中心暂未开放"}>
-    {user?.avatarUrl ? <Image className="user-center-avatar" src={user.avatarUrl} alt="" width={22} height={22} unoptimized /> : <UserCircle size={22} weight="light" aria-hidden="true" />}
-    <span>{user?.nickname || "用户中心"}{!available && <small>暂未开放</small>}</span>
+  return <button className="user-center-entry" type="button" disabled={!available || disabled} onClick={onOpenAccount} aria-expanded={user ? expanded : undefined} aria-haspopup={user ? "dialog" : undefined} aria-label={user ? `${user.nickname}，账号与营业设置` : "登录"}>
+    <ShopAvatar key={user?.avatarUrl ?? "guest"} url={user?.avatarUrl} name={user?.nickname ?? ""} />
+    <span>{user?.nickname || "登录"}</span>
   </button>;
 }

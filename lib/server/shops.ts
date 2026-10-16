@@ -13,7 +13,10 @@ export function publishedShop(record: ShopRecord, isOwner = false): Shop | null 
   const published = record.published as unknown as Shop;
   // Allowlist public fields, including for old stored JSON, never participant IDs.
   return { id: record.id, kind: "human", name: published.name, description: published.description, signStyle: published.signStyle,
-    musicTrackId: published.musicTrackId, acceptingLetters: published.acceptingLetters, scenes: published.scenes, isOwner };
+    musicTrackId: published.musicTrackId, acceptingLetters: record.acceptingLetters ?? published.acceptingLetters,
+    isOpen: record.isOpen ?? true, discoverable: record.discoverable ?? true,
+    ownerDisplayName: record.ownerDisplayName ?? "旅人", ownerAvatarUrl: record.ownerAvatarUrl ?? null,
+    scenes: published.scenes, isOwner };
 }
 export async function findShop(id: string, viewerId?: string): Promise<Shop> {
   const system = getSystemShop(id);
@@ -21,6 +24,7 @@ export async function findShop(id: string, viewerId?: string): Promise<Shop> {
   const record = await prisma.shop.findUnique({ where: { id } });
   const shop = record && publishedShop(record, Boolean(viewerId && record.ownerId === viewerId));
   if (!shop) fail(404, "这家小店还没有开门");
+  if (viewerId && !shop.isOwner) shop.isFavorite = Boolean(await prisma.shopFavorite.findUnique({ where: { userId_shopId: { userId: viewerId, shopId: id } } }));
   return shop;
 }
 export async function ownShop(ownerId: string) {
@@ -63,7 +67,9 @@ export async function publishShop(ownerId: string) {
   const draft = draftSchema.parse(record.draft);
   if (!draft.name || !draft.scenes.outdoor || !draft.scenes.indoor) fail(400, "发布前请填写店名，并补齐室外和室内图片");
   const [outdoor, indoor] = await Promise.all([publishAsset(ownerId, draft.scenes.outdoor, "outdoor"), publishAsset(ownerId, draft.scenes.indoor, "indoor")]);
-  const shop: Shop = { ...draft, id: record.id, kind: "human", scenes: { outdoor, indoor } };
+  const shop: Shop = { ...draft, id: record.id, kind: "human", scenes: { outdoor, indoor },
+    acceptingLetters: record.acceptingLetters, isOpen: record.isOpen, discoverable: record.discoverable,
+    ownerDisplayName: record.ownerDisplayName, ownerAvatarUrl: record.ownerAvatarUrl };
   // A single compare-and-swap publishes the pair. Concurrent draft edits win.
   const result = await prisma.shop.updateMany({ where: { id: record.id, ownerId, revision: record.revision }, data: { published: shop as unknown as Prisma.InputJsonValue, publishedAt: new Date(), revision: { increment: 1 } } });
   if (result.count !== 1) fail(409, "草稿已更新，请重新预览后发布");

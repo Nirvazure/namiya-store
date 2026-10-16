@@ -1,7 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowLeft, EnvelopeSimple, Pause, Play } from "@phosphor-icons/react";
+import { ArrowLeft } from "@phosphor-icons/react/dist/csr/ArrowLeft";
+import { EnvelopeSimple } from "@phosphor-icons/react/dist/csr/EnvelopeSimple";
+import { Pause } from "@phosphor-icons/react/dist/csr/Pause";
+import { Play } from "@phosphor-icons/react/dist/csr/Play";
 import type { ThreadDetail, ThreadListResponse, ThreadMessage, ThreadSummary } from "@/domain/threads";
 import { ShopDialog } from "@/components/shops/ShopDialog";
 import { api, errorMessage } from "@/services/api/client";
@@ -21,7 +24,6 @@ export function ThreadMailbox({ userId, initialThreadId, onClose, onRead }: { us
   const activeBox = useRef(box);
   const versions = useRef(new Map<string, number>());
   const alive = useRef(true);
-  const autoStarted = useRef(new Set<string>());
   const onReadRef = useRef(onRead);
   useEffect(() => { onReadRef.current = onRead; }, [onRead]);
   useEffect(() => { activeId.current = selected; }, [selected]);
@@ -60,11 +62,6 @@ export function ThreadMailbox({ userId, initialThreadId, onClose, onRead }: { us
     finally { if (alive.current) setBusy(false); }
   }, [showDetail]);
   useEffect(() => {
-    if (detail?.thread.generationStatus !== "pending" || detail.thread.blocked || autoStarted.current.has(detail.thread.id)) return;
-    autoStarted.current.add(detail.thread.id);
-    void generate(detail.thread.id);
-  }, [detail, generate]);
-  useEffect(() => {
     if (!selected) return;
     const timer = window.setInterval(() => {
       if (!document.hidden) void api<ThreadDetail>(`/api/threads/${selected}`).then(showDetail).catch(() => {});
@@ -78,7 +75,6 @@ export function ThreadMailbox({ userId, initialThreadId, onClose, onRead }: { us
     try {
       const value = await api<ThreadDetail>(`/api/threads/${selected}/messages`, { method: "POST", body: JSON.stringify({ body, clientRequestId }), signal: AbortSignal.timeout(30_000) });
       showDetail(value);
-      if (value.thread.isAi && !value.thread.blocked) { autoStarted.current.add(selected); await generate(selected); }
       return true;
     } catch (error) { setError(errorMessage(error)); return false; }
     finally { if (alive.current) setBusy(false); }
@@ -91,13 +87,13 @@ export function ThreadMailbox({ userId, initialThreadId, onClose, onRead }: { us
     finally { if (alive.current) setBusy(false); }
   }
   const visibleDetail = detail?.thread.id === selected ? detail : undefined;
-  return <ShopDialog title={selected ? visibleDetail?.thread.title || "一段往来" : "旧信箱"} eyebrow="一封一封，慢慢读" onClose={onClose} wide>
+  return <ShopDialog title={selected ? visibleDetail?.thread.title || "一段往来" : "自己的信箱"} eyebrow="一封一封，慢慢读" onClose={onClose} wide>
     {error && <p className="mail-error" role="alert">{error}<button type="button" onClick={() => { setError(""); void refresh(); }}>重新连接</button></p>}
     {selected ? <>
       <div className="mail-toolbar"><button type="button" onClick={() => { setSelected(undefined); setDetail(undefined); setError(""); void refresh(); }}><ArrowLeft size={16} />返回信箱</button><span>{visibleDetail?.thread.shopName} · {visibleDetail?.thread.signature || "匿名来信"}</span></div>
       {visibleDetail ? <>
         <div className="mail-messages">{visibleDetail.messages.map(message => <article className={`mail-message mail-message-${message.role}`} key={message.id}><header><strong>{message.role === "visitor" ? visibleDetail.thread.viewerRole === "visitor" ? "我的来信" : visibleDetail.thread.signature || "匿名来信" : message.source === "openai" ? "爷爷的 AI 回信" : "店主回信"}</strong><time dateTime={message.createdAt}>{new Date(message.createdAt).toLocaleString("zh-CN")}</time></header><p>{message.body}</p>{message.source === "openai" && <VoicePlayer key={message.id} message={message} />}</article>)}</div>
-        {visibleDetail.thread.generationStatus !== "idle" && <div className="mail-wait" role="status"><p>{busy || visibleDetail.thread.generationStatus === "generating" ? "爷爷正在灯下读信。你可以先收起信箱，去专注一会儿。" : "文字回信暂时没有完成，来信已经保存。"}</p><button type="button" disabled={busy || visibleDetail.thread.blocked} onClick={() => void generate(selected)}>继续等待 / 重试回信</button></div>}
+        {visibleDetail.thread.generationStatus !== "idle" && <div className="mail-wait" role="status"><p>{busy || visibleDetail.thread.generationStatus === "generating" || visibleDetail.thread.generationStatus === "pending" ? "爷爷正在灯下读信。你可以先收起信箱，去专注一会儿。" : "文字回信暂时没有完成，来信已经保存。"}</p><button type="button" disabled={busy || visibleDetail.thread.blocked || visibleDetail.thread.generationStatus === "generating" || visibleDetail.thread.generationStatus === "pending"} onClick={() => void generate(selected)}>重试回信</button></div>}
         {!visibleDetail.thread.isAi && visibleDetail.messages.at(-1)?.role === "visitor" && <p className="mail-note">信已经送达。真人店主会在有空时回信，不必一直等在这里。</p>}
         <ReplyComposer key={selected} userId={userId} detail={visibleDetail} busy={busy} onSend={send} />
         <div className="mail-block"><p>通信只对双方可见。屏蔽后双方都不能继续寄信。</p><button type="button" disabled={busy} onClick={() => void toggleBlock()}>{visibleDetail.thread.blocked ? "尝试解除我的屏蔽" : "屏蔽这段通信"}</button></div>

@@ -1,6 +1,6 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
-import { prisma } from "./db";
+import { initializeAccount } from "./account";
 import { fail } from "./http";
 
 export async function getAuthUser() {
@@ -12,6 +12,6 @@ export async function getAuthUser() {
 export async function requireUser(): Promise<{ id: string }> {
   const user = await getAuthUser();
   if (!user) fail(401, "请先登录");
-  await prisma.profile.upsert({ where: { authUserId: user.id }, create: { authUserId: user.id }, update: {} });
+  await initializeAccount(user);
   return { id: user.id };
 }

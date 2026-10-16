@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { LoadedThread } from "@/lib/server/messaging";
+vi.mock("server-only", () => ({}));
 
 const mocks = vi.hoisted(() => ({
   db: { thread: { findUnique: vi.fn(), update: vi.fn() }, message: { findUnique: vi.fn(), create: vi.fn(), update: vi.fn(), updateMany: vi.fn() }, $transaction: vi.fn() },

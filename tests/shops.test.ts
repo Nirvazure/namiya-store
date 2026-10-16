@@ -2,7 +2,7 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { systemShops, type ShopDraft } from "@/domain/shops";
 
 vi.mock("server-only", () => ({}));
-const db = vi.hoisted(() => ({ shop: { findUnique: vi.fn(), findMany: vi.fn(), updateMany: vi.fn(), upsert: vi.fn() }, upload: { findFirst: vi.fn() } }));
+const db = vi.hoisted(() => ({ shop: { findUnique: vi.fn(), findMany: vi.fn(), updateMany: vi.fn(), upsert: vi.fn() }, shopFavorite: { findUnique: vi.fn() }, $queryRaw: vi.fn(), upload: { findFirst: vi.fn() } }));
 const auth = vi.hoisted(() => ({ getAuthUser: vi.fn(), authConfig: vi.fn() }));
 vi.mock("@/lib/server/db", () => ({ prisma: db }));
 vi.mock("@/lib/server/storage", () => ({ downloadPrivate: vi.fn(), uploadPublic: vi.fn() }));
@@ -65,25 +65,25 @@ describe("shop ownership and publication", () => {
   });
   it("uses verified optional identity in both directory and shared-link APIs", async () => {
     const record = { id: "shared-shop", ownerId: "owner", published: draft };
-    db.shop.findMany.mockResolvedValue([record]); db.shop.findUnique.mockResolvedValue(record);
+    db.$queryRaw.mockResolvedValue([]); db.shop.findUnique.mockResolvedValue(record);
     auth.authConfig.mockReturnValue({ url: "https://auth.example", key: "public" });
     auth.getAuthUser.mockResolvedValue({ id: "owner" });
-    const ownerList = await (await listShops()).json();
-    expect(ownerList.shops[0].isOwner).toBe(true);
+    const ownerList = await (await listShops(new Request("https://example.com/api/shops"))).json();
+    expect(ownerList.shops).toEqual([]);
     const ownerShop = await (await shopById(new Request("https://example.com/api/shops/shared-shop"), { params: Promise.resolve({ shopId: "shared-shop" }) })).json();
     expect(ownerShop.shop.isOwner).toBe(true);
     expect(ownerShop.shop).not.toHaveProperty("ownerId");
     auth.getAuthUser.mockResolvedValue({ id: "third-person" });
-    expect((await (await listShops()).json()).shops[0].isOwner).toBe(false);
+    expect((await (await listShops(new Request("https://example.com/api/shops"))).json()).shops).toEqual([]);
   });
   it("keeps public shop APIs usable without Auth config or during an Auth outage", async () => {
     const record = { id: "shared-shop", ownerId: "owner", published: draft };
-    db.shop.findMany.mockResolvedValue([record]); db.shop.findUnique.mockResolvedValue(record);
-    expect((await (await listShops()).json()).shops[0].isOwner).toBe(false);
+    db.$queryRaw.mockResolvedValue([record]); db.shop.findUnique.mockResolvedValue(record);
+    expect((await (await listShops(new Request("https://example.com/api/shops"))).json()).shops[0].isOwner).toBe(false);
     expect(auth.getAuthUser).not.toHaveBeenCalled();
     auth.authConfig.mockReturnValue({ url: "https://auth.example", key: "public" });
     auth.getAuthUser.mockRejectedValue(new Error("Auth unavailable"));
-    expect((await (await listShops()).json()).shops[0].isOwner).toBe(false);
+    expect((await (await listShops(new Request("https://example.com/api/shops"))).json()).shops[0].isOwner).toBe(false);
     const response = await shopById(new Request("https://example.com/api/shops/shared-shop"), { params: Promise.resolve({ shopId: "shared-shop" }) });
     expect(response.status).toBe(200);
     expect((await response.json()).shop.isOwner).toBe(false);

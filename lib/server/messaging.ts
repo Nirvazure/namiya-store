@@ -5,21 +5,14 @@ import { getSystemShop } from "@/domain/shops";
 import { prisma } from "@/lib/server/db";
 import { fail } from "@/lib/server/http";
 import { participantRole, requestId, textField } from "@/lib/server/messaging-policy";
+import { lockShop } from "./shop-lock";
+import { serializable } from "./transaction";
+export { serializable } from "./transaction";
 
 type Db = Prisma.TransactionClient;
 const includeMessages = { messages: { orderBy: { seq: "asc" as const } } };
 export type LoadedThread = Prisma.ThreadGetPayload<{ include: typeof includeMessages }>;
 type SummaryThread = Omit<LoadedThread, "messages"> & { messages: Pick<LoadedThread["messages"][number], "role" | "status" | "source" | "createdAt" | "leaseUntil">[] };
-
-export async function serializable<T>(work: (tx: Db) => Promise<T>): Promise<T> {
-  for (let attempt = 0; ; attempt++) {
-    try { return await prisma.$transaction(work, { isolationLevel: "Serializable" }); }
-    catch (error) {
-      if (attempt < 3 && typeof error === "object" && error !== null && "code" in error && (error.code === "P2034" || error.code === "P2002")) continue;
-      throw error;
-    }
-  }
-}
 
 function validated<T>(work: () => T): T {
   try { return work(); } catch (error) { return fail(400, error instanceof Error ? error.message : "输入无效。"); }
@@ -46,6 +39,7 @@ export function threadSummary(thread: SummaryThread, userId: string, name: strin
   const pending = thread.messages.find(message => message.source === "openai" && message.status !== "completed");
   const generationStatus = pending
     ? pending.status === "processing" && pending.leaseUntil && pending.leaseUntil > new Date() ? "generating" : "failed"
+    : thread.generationStatus === "pending" && Date.now() - thread.updatedAt.getTime() > 120_000 ? "failed"
     : thread.generationStatus as ThreadSummary["generationStatus"];
   // Deliberate allowlist: internal participant IDs, storage paths and leases never leave the server.
   return { id: thread.id, shopId: thread.shopId, shopName: name, title: thread.title, signature: thread.signature,
@@ -94,9 +88,10 @@ export async function createThread(userId: string, input: Record<string, unknown
     const system = getSystemShop(fields.shopId);
     if (system && system.id !== "grandpa") fail(409, "这家示例小店暂不接信。");
     if (!system) {
-      const shop = await db.shop.findUnique({ where: { id: fields.shopId } });
+      const shop = await lockShop(db, { id: fields.shopId });
       if (!shop?.published) fail(404, "这家小店尚未开门。");
-      if (!(shop.published as Shop).acceptingLetters) fail(409, "店主暂时暂停接收新来信。");
+      if (shop.isOpen === false) fail(409, "这家店暂时关门，已有往来仍可回自己店里继续。");
+      if (!(shop.acceptingLetters ?? (shop.published as Shop).acceptingLetters)) fail(409, "店主暂时暂停接收新来信。");
       ownerId = shop.ownerId;
       if (ownerId === userId) fail(400, "请到另一家小店投递心事。");
     }

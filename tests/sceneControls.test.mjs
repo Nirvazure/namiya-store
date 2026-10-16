@@ -10,13 +10,15 @@ import { MusicDock } from '../components/music/MusicDock.tsx';
 import { MusicDetails } from '../components/music/MusicControls.tsx';
 import { useMusicStore } from '../store/useMusicStore.ts';
 
-test('account entry is explicitly unavailable until a real callback is supplied', () => {
+test('account entry shows a single login or nickname with a real callback', () => {
   const unavailable = renderToStaticMarkup(createElement(UserCenterEntry));
   assert.match(unavailable, /disabled=""/);
-  assert.match(unavailable, /暂未开放/);
+  assert.match(unavailable, /登录/);
+  assert.doesNotMatch(unavailable, /用户中心|暂未开放/);
   const available = renderToStaticMarkup(createElement(UserCenterEntry, { user: { nickname: '小林' }, onOpenAccount() {} }));
   assert.doesNotMatch(available, /disabled|暂未开放/);
   assert.match(available, /小林/);
+  assert.equal((available.match(/class="user-center-entry"/g) || []).length, 1);
 });
 
 test('shared music dock exposes details and playback across scenes, and hiding it preserves audio', t => {

@@ -11,7 +11,19 @@
 5. 私桶必须保持 private，公桶仅存发布后的 WebP 场景；浏览器没有本产品业务表或私桶的 Data API 权限。
 6. 配置生产完整 `NEXT_PUBLIC_SITE_URL`，运行 `npm run build`，再部署。
 
-本轮未向共享 Supabase 应用迁移，未修改 OAuth 设置，未调用真实付费 AI / TTS；按用户要求未执行浏览器测试。远端已同步至 `8d509b5`，原有天气、日历、磁带和本地字体改动已合并保留。
+初次代码验收时未向共享 Supabase 应用迁移，未修改 OAuth 设置，未调用真实付费 AI / TTS；按用户要求未执行浏览器测试。当时远端已同步至 `8d509b5`，原有天气、日历、磁带和本地字体改动已合并保留。数据库后续执行结果见下方记录。
+
+## 2026-10-16 数据库迁移验收
+
+用户审阅并批准迁移方案后，已通过 `prisma migrate deploy` 成功应用 `20261015000000_initial`，迁移完成记录保存在 `namiya_store._prisma_migrations`。
+
+- 已创建 `profiles`、`shops`、`uploads`、`threads`、`messages` 五张业务表，Prisma 对五个模型的读取均成功。
+- 五张业务表均启用 RLS；已核对 `anon`、`authenticated` 均无直接 SELECT 权限，六个外键均符合迁移中的级联删除定义。
+- 已创建私桶 `namiya-private`（15 MiB）和公桶 `namiya-scenes`（10 MiB，仅 WebP），属性与迁移一致。
+- 本地 `/api/shops` 已由迁移前的 503 恢复为 200，返回空的用户店铺列表；`/api/me` 无会话请求返回 200、`configured: true`。
+- 已确认 Supabase GitHub provider 启用，本地登录入口正常发起带 PKCE 的授权跳转。真实浏览器会话的登录完成状态、上传和 AI / TTS 仍需另行验收。
+
+本次迁移未导入示例账号、店铺或信件，也未修改 OAuth 配置；配置凭据保留在被 Git 忽略的本地环境文件中。
 
 ## 自动化检查
 

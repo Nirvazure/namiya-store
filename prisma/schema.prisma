@@ -21,13 +21,31 @@ model Profile {
 model Shop {
   id String @id @default(cuid())
   ownerId String @unique @db.Uuid
+  isOpen Boolean @default(true)
+  discoverable Boolean @default(true)
+  acceptingLetters Boolean @default(true)
+  ownerDisplayName String @default("旅人")
+  ownerAvatarUrl String?
   draft Json?
   published Json?
   publishedAt DateTime?
   revision Int @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  favorites ShopFavorite[]
+  @@index([isOpen, discoverable, publishedAt])
   @@map("shops")
+  @@schema("namiya_store")
+}
+
+model ShopFavorite {
+  userId String @db.Uuid
+  shopId String
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  @@id([userId, shopId])
+  @@index([userId, createdAt, shopId])
+  @@map("shop_favorites")
   @@schema("namiya_store")
 }
 

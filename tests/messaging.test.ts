@@ -1,11 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { LoadedThread } from "@/lib/server/messaging";
+vi.mock("server-only", () => ({}));
 
 const db = vi.hoisted(() => ({
   thread: { findUnique: vi.fn(), findMany: vi.fn(), create: vi.fn(), update: vi.fn() },
   message: { count: vi.fn(), create: vi.fn() },
   shop: { findUnique: vi.fn() },
   $transaction: vi.fn(),
+  $queryRaw: vi.fn(),
 }));
 vi.mock("@/lib/server/db", () => ({ prisma: db }));
 import { appendMessage, authorizedThread, createThread, markRead, threadDetail } from "@/lib/server/messaging";
@@ -91,5 +93,12 @@ describe("private thread service", () => {
     db.thread.findUnique.mockResolvedValue(thread);
     await appendMessage(thread.id, "owner", { body: "我仍然会读你的信。", clientRequestId: "owner-reply-1" });
     expect(db.message.create).toHaveBeenCalledWith({ data: expect.objectContaining({ threadId: thread.id, role: "owner", body: "我仍然会读你的信。" }) });
+  });
+  it("rejects a closed shop even with acceptingLetters enabled, under the shop lock", async () => {
+    db.thread.findUnique.mockResolvedValue(null);
+    db.shop.findUnique.mockResolvedValue({ ownerId: "owner", isOpen: false, acceptingLetters: true, published: { name: "小店", acceptingLetters: true } });
+    await expect(createThread("visitor", { shopId: "closed", body: "新信", clientRequestId: "closed-request" })).rejects.toMatchObject({ status: 409 });
+    expect(db.$queryRaw).toHaveBeenCalled();
+    expect(db.thread.create).not.toHaveBeenCalled();
   });
 });

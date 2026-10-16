@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { CompanionRuntime } from "@/components/companions/CompanionRuntime";
+import { ExperienceRoot } from "@/components/ExperienceRoot";
 import "./globals.css";
 import "./book-font.css";
 
@@ -56,7 +57,7 @@ export default function RootLayout({
       lang="zh-CN"
       className={`${book.variable} ${brush.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col"><CompanionRuntime />{children}</body>
+      <body className="min-h-full flex flex-col"><CompanionRuntime /><ExperienceRoot />{children}</body>
     </html>
   );
 }

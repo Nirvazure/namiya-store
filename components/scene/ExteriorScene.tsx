@@ -2,13 +2,13 @@
 
 import Image from "next/image";
 import { useEffect, useRef, type CSSProperties, type PointerEvent } from "react";
-import { ArrowRight, EnvelopeSimple } from "@phosphor-icons/react";
+import { ArrowRight } from "@phosphor-icons/react/dist/csr/ArrowRight";
+import { EnvelopeSimple } from "@phosphor-icons/react/dist/csr/EnvelopeSimple";
 import { gsap } from "gsap";
 import type { LetterFlowState } from "@/domain/letterTypes";
 import { defaultShop, sceneImageStyle, type Shop } from "@/domain/shops";
 import layers from "@/public/joy_store_parallax/optimized/layers.json";
 import { useSceneEnvironment } from "@/components/scene/useSceneEnvironment";
-import { UserCenterEntry, type UserCenterEntryProps } from "@/components/scene/UserCenterEntry";
 import { StreetCalendar } from "@/components/scene/StreetCalendar";
 import "@/components/shops/shops.css";
 
@@ -26,7 +26,6 @@ type Props = {
   onPrepareEntry: () => void;
   entering: boolean;
   entryError?: string;
-  userCenter?: UserCenterEntryProps;
 };
 
 export function ExteriorScene(props: Props) {
@@ -34,7 +33,7 @@ export function ExteriorScene(props: Props) {
   return shop.scenes.outdoor.mode === "layers" ? <LayeredExteriorScene {...props} shop={shop} /> : <ImageExteriorScene {...props} shop={shop} />;
 }
 
-function LayeredExteriorScene({ shop = defaultShop, flowState, hasReply, error, onOpenMailbox, onEditLetter, onEnter, onPrepareEntry, entering, entryError, userCenter }: Props) {
+function LayeredExteriorScene({ shop = defaultShop, flowState, hasReply, error, onOpenMailbox, onEditLetter, onEnter, onPrepareEntry, entering, entryError }: Props) {
   const root = useRef<HTMLElement>(null);
   const mailbox = useRef<HTMLButtonElement>(null);
   const moveScene = useRef<(x: number, y: number) => void>(() => {});
@@ -78,7 +77,7 @@ function LayeredExteriorScene({ shop = defaultShop, flowState, hasReply, error, 
     moveScene.current(Math.max(-1, Math.min(1, (event.clientX - box.left) / box.width * 2 - 1)), Math.max(-1, Math.min(1, (event.clientY - box.top) / box.height * 2 - 1)));
   }
 
-  const mailboxLabel = delivering ? "信件投递中" : ready ? "点击邮箱，投递这封信" : hasReply ? "邮箱有回信，点击取信" : "点击邮箱，取一张信纸";
+  const mailboxLabel = shop.isOwner ? hasReply ? "自己的信箱有未读来信，点击取信" : "打开自己的信箱" : delivering ? "信件投递中" : ready ? "点击邮箱，投递这封信" : "点击邮箱，取一张信纸";
 
   return (
     <section className={`interactive-street ${ready ? "letter-is-ready" : ""} ${delivering ? "is-delivering" : ""}`} data-phase={phase} data-weather={condition} ref={root} onPointerMove={handlePointer} onPointerLeave={() => { if (!paused) moveScene.current(0, 0); }} aria-label="解忧杂货店互动场景">
@@ -99,9 +98,6 @@ function LayeredExteriorScene({ shop = defaultShop, flowState, hasReply, error, 
 
       <header className="scene-header">
         <a className="store-brand" href="#street" aria-label="解忧杂货店"><Image className="store-brand-icon" src="/site-logo.png" alt="" width={48} height={56} preload /><span>解忧杂货店<small lang="en">Namiya General Store</small></span></a>
-        <div className="scene-header-actions">
-          <UserCenterEntry {...userCenter} />
-        </div>
       </header>
 
       <div className="scene-introduction">
@@ -111,7 +107,7 @@ function LayeredExteriorScene({ shop = defaultShop, flowState, hasReply, error, 
         <p className="scene-local-time">{environment ? <>{environment.phaseLabel} · {environment.timeSource} <time>{environment.localTime}</time></> : "正在感受此刻的光线"}</p>
         <div className="scene-calendar-placement"><StreetCalendar date={environment?.localDate} /></div>
         {hasReply && <p className="scene-reply-reminder">邮箱里，多了一封回信。</p>}
-        <button className="scene-write-link" onClick={hasReply ? onOpenMailbox : onEnter} onPointerEnter={onPrepareEntry} onFocus={onPrepareEntry} disabled={delivering || entering} type="button">{hasReply ? "取出你的回信" : entering ? "正在开门…" : "推门进店"}<ArrowRight size={17} /></button>
+        <button className="scene-write-link" onClick={onEnter} onPointerEnter={onPrepareEntry} onFocus={onPrepareEntry} disabled={delivering || entering || (!shop.isOpen && !shop.isOwner)} type="button">{!shop.isOpen && !shop.isOwner ? "暂时关店" : entering ? "正在开门…" : "推门进店"}<ArrowRight size={17} /></button>
         {(environment?.live || environment?.placeName) && <p className="scene-data-credit">{environment.live && <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">天气 · Open-Meteo</a>}{environment.placeName && <a href="https://www.bigdatacloud.com/" target="_blank" rel="noreferrer">地点 · BigDataCloud</a>}</p>}
       </div>
 
@@ -125,10 +121,10 @@ function LayeredExteriorScene({ shop = defaultShop, flowState, hasReply, error, 
             <Image className="shop-base" src={`${assets}building.webp`} alt="有斑驳招牌、红雨棚、自行车的水彩手绘杂货店" width={1080} height={1080} sizes="(max-width: 700px) 100vw, 70vw" preload />
             {layers.map(layer => <div key={layer.name} className="shop-part" data-depth={partDepths[layer.name]} style={{ left: `${layer.left / 10.8}%`, top: `${layer.top / 10.8}%`, width: `${layer.width / 10.8}%`, height: `${layer.height / 10.8}%` }} aria-hidden="true"><Image src={`${assets}${layer.file}`} alt="" fill sizes={`${Math.ceil(layer.width / 1080 * 65)}vw`} /></div>)}
           </div>
-          <button className="shop-window" type="button" aria-label="轻触二楼窗户，点亮窗灯" onClick={e => e.currentTarget.classList.toggle("window-awake")}><span aria-hidden="true" /></button>
+          <button className="shop-window" type="button" disabled={!shop.isOpen} aria-label="轻触二楼窗户，点亮窗灯" onClick={e => e.currentTarget.classList.toggle("window-awake")}><span aria-hidden="true" /></button>
           <div className="shop-door-light" aria-hidden="true" />
           {shop.id !== "grandpa" && <div className={`personal-shop-sign sign-${shop.signStyle}`}>{shop.name}</div>}
-          <button className="shop-entry-door" aria-label={entering ? "正在推门进店" : "推开杂货店的门，进入店内"} disabled={entering || delivering} onPointerEnter={onPrepareEntry} onFocus={onPrepareEntry} onClick={onEnter} type="button"><span>{entering ? "正在开门…" : "推门进店"}<ArrowRight size={14} /></span></button>
+          <button className="shop-entry-door" aria-label={entering ? "正在推门进店" : "推开杂货店的门，进入店内"} disabled={entering || delivering || (!shop.isOpen && !shop.isOwner)} onPointerEnter={onPrepareEntry} onFocus={onPrepareEntry} onClick={onEnter} type="button"><span>{!shop.isOpen && !shop.isOwner ? "暂时关店" : entering ? "正在开门…" : "推门进店"}<ArrowRight size={14} /></span></button>
         </div></div>
       </div>
 
@@ -137,7 +133,7 @@ function LayeredExteriorScene({ shop = defaultShop, flowState, hasReply, error, 
         <button className={`watercolor-mailbox ${hasReply ? "mailbox-has-reply" : ""}`} ref={mailbox} id="scene-mailbox" aria-label={mailboxLabel} aria-busy={delivering} disabled={delivering} onClick={onOpenMailbox} type="button">
           <Image src={`${assets}mailbox.webp`} alt="" width={600} height={900} sizes="(max-width: 700px) 140px, 18vw" />
           <span className="mail-slot-flap" aria-hidden="true" />
-          <span className="mailbox-state-label">{delivering ? "正在寄出" : ready ? "投递这封信" : hasReply ? "有回信了" : "取一张信纸"}</span>
+          <span className="mailbox-state-label">{shop.isOwner ? hasReply ? "有未读来信" : "自己的信箱" : !shop.isOpen || !shop.acceptingLetters ? "暂不接收新信" : delivering ? "正在寄出" : ready ? "投递这封信" : "取一张信纸"}</span>
           {hasReply ? <span className="reply-peeking" aria-hidden="true"><EnvelopeSimple size={25} /></span> : null}
         </button>
       </div>
@@ -150,7 +146,7 @@ function LayeredExteriorScene({ shop = defaultShop, flowState, hasReply, error, 
   );
 }
 
-function ImageExteriorScene({ shop = defaultShop, flowState, hasReply, error, onOpenMailbox, onEditLetter, onEnter, onPrepareEntry, entering, entryError, userCenter }: Props) {
+function ImageExteriorScene({ shop = defaultShop, flowState, hasReply, error, onOpenMailbox, onEditLetter, onEnter, onPrepareEntry, entering, entryError }: Props) {
   const environment = useSceneEnvironment();
   const mailbox = useRef<HTMLButtonElement>(null);
   const ready = flowState === "envelopeReady";
@@ -162,7 +158,7 @@ function ImageExteriorScene({ shop = defaultShop, flowState, hasReply, error, on
     <div className="street-sky sky-dusk" aria-hidden="true" /><div className="street-sky sky-morning" aria-hidden="true" /><div className="street-sky sky-day" aria-hidden="true" />
     <div className="scene-paper-grain" aria-hidden="true" /><div className="ambient-haze" aria-hidden="true" /><div className="watercolor-cloud cloud-left" aria-hidden="true" /><div className="watercolor-cloud cloud-right" aria-hidden="true" /><div className="ambient-moon" aria-hidden="true" /><div className="ambient-stars" aria-hidden="true" />
     <div className="weather-wash" aria-hidden="true" /><div className="weather-mist" aria-hidden="true" /><div className="weather-precipitation" aria-hidden="true">{Array.from({ length: 24 }, (_, index) => <span key={index} style={{ "--particle-x": `${(index * 43 + 7) % 100}%`, "--particle-delay": `${-(index * .73)}s`, "--particle-speed": `${.85 + (index % 5) * .18}`, "--particle-opacity": .2 + (index % 4) * .1 } as CSSProperties} />)}</div>
-    <header className="scene-header"><a className="store-brand" href="#street" aria-label="解忧杂货店"><Image className="store-brand-icon" src="/site-logo.png" alt="" width={48} height={56} preload /><span>解忧杂货店<small lang="en">Namiya General Store</small></span></a><div className="scene-header-actions"><UserCenterEntry {...userCenter} /></div></header>
+    <header className="scene-header"><a className="store-brand" href="#street" aria-label="解忧杂货店"><Image className="store-brand-icon" src="/site-logo.png" alt="" width={48} height={56} preload /><span>解忧杂货店<small lang="en">Namiya General Store</small></span></a></header>
     <div className="scene-introduction">
       <p className="scene-salutation">{shop.name} · 此地，此刻</p>
       <h1 className="scene-place-name" title={environment?.placeName}>{environment?.placeName ?? (environment?.live ? "所在地天气" : "本地时间")}</h1>
@@ -170,11 +166,11 @@ function ImageExteriorScene({ shop = defaultShop, flowState, hasReply, error, on
       <p className="scene-local-time">{environment ? <>{environment.phaseLabel} · {environment.timeSource} <time>{environment.localTime}</time></> : "正在感受此刻的光线"}</p>
       <div className="scene-calendar-placement"><StreetCalendar date={environment?.localDate} /></div>
       {hasReply && <p className="scene-reply-reminder">邮箱里，多了一封回信。</p>}
-      <button className="scene-write-link shop-entry-door" type="button" disabled={entering || delivering} onPointerEnter={onPrepareEntry} onFocus={onPrepareEntry} onClick={onEnter}>{entering ? "正在开门…" : "推门进店"}<ArrowRight size={17} /></button>
+      <button className="scene-write-link shop-entry-door" type="button" disabled={entering || delivering || (!shop.isOpen && !shop.isOwner)} onPointerEnter={onPrepareEntry} onFocus={onPrepareEntry} onClick={onEnter}>{!shop.isOpen && !shop.isOwner ? "暂时关店" : entering ? "正在开门…" : "推门进店"}<ArrowRight size={17} /></button>
       {(environment?.live || environment?.placeName) && <p className="scene-data-credit">{environment.live && <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">天气 · Open-Meteo</a>}{environment.placeName && <a href="https://www.bigdatacloud.com/" target="_blank" rel="noreferrer">地点 · BigDataCloud</a>}</p>}
     </div>
     <div className="whole-shop-picture"><Image src={shop.scenes.outdoor.src} alt={`${shop.name}的室外门面`} fill unoptimized sizes="(max-width: 700px) 94vw, 65vw" style={sceneImageStyle(shop.scenes.outdoor)} preload /><div className={`personal-shop-sign sign-${shop.signStyle}`}>{shop.name}</div></div>
-    <div className="whole-shop-actions"><button ref={mailbox} id="scene-mailbox" type="button" onClick={onOpenMailbox} disabled={delivering || (!shop.acceptingLetters && !ready && !hasReply)}><EnvelopeSimple size={19} />{delivering ? "正在投递…" : ready ? "投递这封信" : hasReply ? "读一封回信" : shop.acceptingLetters ? "取一张信纸" : "暂不接收新信"}</button>{ready && <button type="button" onClick={onEditLetter}>展开修改</button>}</div>
+    <div className="whole-shop-actions"><button ref={mailbox} id="scene-mailbox" type="button" aria-label={shop.isOwner ? "打开自己的信箱" : undefined} onClick={onOpenMailbox} disabled={delivering}><EnvelopeSimple size={19} />{shop.isOwner ? hasReply ? "有未读来信" : "自己的信箱" : !shop.isOpen || !shop.acceptingLetters ? "暂不接收新信" : delivering ? "正在投递…" : ready ? "投递这封信" : "取一张信纸"}</button>{ready && <button type="button" onClick={onEditLetter}>展开修改</button>}</div>
     {error && <p className="whole-shop-status" role="alert">{error}</p>}
     {(entering || entryError) && <p className="scene-entry-status" role={entryError ? "alert" : "status"}>{entryError ?? "正在为你点亮店里的灯…"}</p>}
     <div className="scene-corner-note"><span>门外与门内，是同一家小店</span></div>

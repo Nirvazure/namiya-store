@@ -27,14 +27,18 @@ try {
   }
   assert.ok(ready, `Local server failed to start: ${logs}`);
   const session = await fetch(`${base}/api/me`);
-  assert.deepEqual(await session.json(), { user: null, configured: false }); checks++;
-  for (const [path, name] of [["/", "解忧杂货店"], ["/shops/grandpa", "解忧杂货店"], ["/shops/sashimi", "喵猫刺身"], ["/shops/dessert", "兔子的甜品屋"], ["/shops/matcha", "一盏抹茶"]]) {
+  assert.deepEqual(await session.json(), { user: null, configured: false, myShopId: null }); checks++;
+  for (const [path, name] of [["/", "解忧杂货店"], ["/shop/grandpa", "解忧杂货店"], ["/shop/sashimi", "喵猫刺身"], ["/shop/dessert", "兔子的甜品屋"], ["/shop/matcha", "一盏抹茶"]]) {
     const response = await fetch(`${base}${path}`);
     assert.equal(response.status, 200, path);
     const html = await response.text();
     assert.ok(html.includes(name), `${path} renders its own shop`);
-    assert.ok(html.includes("逛逛小店"), `${path} contains discovery navigation`); checks++;
+    assert.ok(html.includes("小店头像导航"), `${path} contains avatar navigation`);
+    assert.ok(!html.includes("本机旧信"), `${path} removes the local archive`); checks++;
   }
+  const redirect = await fetch(`${base}/shops/grandpa?from=shared`, { redirect: "manual" });
+  assert.equal(redirect.status, 308);
+  assert.equal(redirect.headers.get("location"), "/shop/grandpa?from=shared"); checks++;
   for (const id of ["grandpa", "sashimi", "dessert", "matcha"]) {
     const response = await fetch(`${base}/api/shops/${id}`);
     assert.equal(response.status, 200);
