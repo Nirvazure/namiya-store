@@ -2,25 +2,38 @@
   "name": "namiya-store",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "npm@11.19.0",
   "scripts": {
-    "test": "node --import ./tests/register.mjs --test tests/*.test.mjs",
+    "test:legacy": "node --import ./tests/register.mjs --test tests/*.test.mjs",
     "test:browser": "node tests/browser-weather.mjs",
     "test:browser:indoor": "node tests/browser-indoor.mjs",
     "prepare:scene": "node scripts/prepare-scene.mjs",
     "prepare:indoor": "node scripts/prepare-indoor.mjs",
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test": "npm run test:unit && npm run test:legacy",
+    "test:unit": "vitest run",
+    "test:http": "node tests/http-smoke.mjs",
+    "db:generate": "prisma generate",
+    "db:deploy": "prisma migrate deploy"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",
+    "@prisma/client": "6.8.2",
+    "@supabase/ssr": "0.12.0",
+    "@supabase/supabase-js": "2.108.2",
     "gsap": "^3.15.0",
     "motion": "^12.40.0",
     "next": "16.2.9",
     "pixi.js": "^8.19.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "sharp": "0.34.5",
+    "server-only": "0.0.1",
+    "zod": "4.4.3",
     "zustand": "^5.0.14"
   },
   "devDependencies": {
@@ -31,6 +44,8 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "prisma": "6.8.2",
+    "vitest": "4.1.6"
   }
 }

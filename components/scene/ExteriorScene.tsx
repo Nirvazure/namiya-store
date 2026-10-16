@@ -5,15 +5,18 @@ import { useEffect, useRef, type CSSProperties, type PointerEvent } from "react"
 import { ArrowRight, EnvelopeSimple } from "@phosphor-icons/react";
 import { gsap } from "gsap";
 import type { LetterFlowState } from "@/domain/letterTypes";
+import { defaultShop, sceneImageStyle, type Shop } from "@/domain/shops";
 import layers from "@/public/joy_store_parallax/optimized/layers.json";
 import { useSceneEnvironment } from "@/components/scene/useSceneEnvironment";
 import { UserCenterEntry, type UserCenterEntryProps } from "@/components/scene/UserCenterEntry";
 import { StreetCalendar } from "@/components/scene/StreetCalendar";
+import "@/components/shops/shops.css";
 
 const assets = "/joy_store_parallax/optimized/";
 const partDepths: Record<string, number> = { roof_antenna: .9, roof_tiles: .2, upper_window: .2, sign_cola: .35, sign_shop: .3, awning: .6, ground_floor: 0, bicycle: .75, air_conditioner: .3, poster: .2, plants: .8 };
 
 type Props = {
+  shop?: Shop;
   flowState: LetterFlowState;
   hasReply: boolean;
   error?: string;
@@ -26,7 +29,12 @@ type Props = {
   userCenter?: UserCenterEntryProps;
 };
 
-export function ExteriorScene({ flowState, hasReply, error, onOpenMailbox, onEditLetter, onEnter, onPrepareEntry, entering, entryError, userCenter }: Props) {
+export function ExteriorScene(props: Props) {
+  const shop = props.shop ?? defaultShop;
+  return shop.scenes.outdoor.mode === "layers" ? <LayeredExteriorScene {...props} shop={shop} /> : <ImageExteriorScene {...props} shop={shop} />;
+}
+
+function LayeredExteriorScene({ shop = defaultShop, flowState, hasReply, error, onOpenMailbox, onEditLetter, onEnter, onPrepareEntry, entering, entryError, userCenter }: Props) {
   const root = useRef<HTMLElement>(null);
   const mailbox = useRef<HTMLButtonElement>(null);
   const moveScene = useRef<(x: number, y: number) => void>(() => {});
@@ -119,6 +127,7 @@ export function ExteriorScene({ flowState, hasReply, error, onOpenMailbox, onEdi
           </div>
           <button className="shop-window" type="button" aria-label="轻触二楼窗户，点亮窗灯" onClick={e => e.currentTarget.classList.toggle("window-awake")}><span aria-hidden="true" /></button>
           <div className="shop-door-light" aria-hidden="true" />
+          {shop.id !== "grandpa" && <div className={`personal-shop-sign sign-${shop.signStyle}`}>{shop.name}</div>}
           <button className="shop-entry-door" aria-label={entering ? "正在推门进店" : "推开杂货店的门，进入店内"} disabled={entering || delivering} onPointerEnter={onPrepareEntry} onFocus={onPrepareEntry} onClick={onEnter} type="button"><span>{entering ? "正在开门…" : "推门进店"}<ArrowRight size={14} /></span></button>
         </div></div>
       </div>
@@ -139,4 +148,35 @@ export function ExteriorScene({ flowState, hasReply, error, onOpenMailbox, onEdi
       {entering || entryError ? <p className="scene-entry-status" role={entryError ? "alert" : "status"}>{entryError ?? "正在为你点亮店里的灯…"}</p> : null}
     </section>
   );
+}
+
+function ImageExteriorScene({ shop = defaultShop, flowState, hasReply, error, onOpenMailbox, onEditLetter, onEnter, onPrepareEntry, entering, entryError, userCenter }: Props) {
+  const environment = useSceneEnvironment();
+  const mailbox = useRef<HTMLButtonElement>(null);
+  const ready = flowState === "envelopeReady";
+  const delivering = flowState === "delivering";
+
+  useEffect(() => { if (ready) mailbox.current?.focus({ preventScroll: true }); }, [ready]);
+
+  return <section className={`interactive-street shop-image-street ${delivering ? "is-delivering" : ""}`} data-phase={environment?.phase ?? "pending"} data-weather={environment?.condition ?? "unknown"} aria-label={`${shop.name}的门面`}>
+    <div className="street-sky sky-dusk" aria-hidden="true" /><div className="street-sky sky-morning" aria-hidden="true" /><div className="street-sky sky-day" aria-hidden="true" />
+    <div className="scene-paper-grain" aria-hidden="true" /><div className="ambient-haze" aria-hidden="true" /><div className="watercolor-cloud cloud-left" aria-hidden="true" /><div className="watercolor-cloud cloud-right" aria-hidden="true" /><div className="ambient-moon" aria-hidden="true" /><div className="ambient-stars" aria-hidden="true" />
+    <div className="weather-wash" aria-hidden="true" /><div className="weather-mist" aria-hidden="true" /><div className="weather-precipitation" aria-hidden="true">{Array.from({ length: 24 }, (_, index) => <span key={index} style={{ "--particle-x": `${(index * 43 + 7) % 100}%`, "--particle-delay": `${-(index * .73)}s`, "--particle-speed": `${.85 + (index % 5) * .18}`, "--particle-opacity": .2 + (index % 4) * .1 } as CSSProperties} />)}</div>
+    <header className="scene-header"><a className="store-brand" href="#street" aria-label="解忧杂货店"><Image className="store-brand-icon" src="/site-logo.png" alt="" width={48} height={56} preload /><span>解忧杂货店<small lang="en">Namiya General Store</small></span></a><div className="scene-header-actions"><UserCenterEntry {...userCenter} /></div></header>
+    <div className="scene-introduction">
+      <p className="scene-salutation">{shop.name} · 此地，此刻</p>
+      <h1 className="scene-place-name" title={environment?.placeName}>{environment?.placeName ?? (environment?.live ? "所在地天气" : "本地时间")}</h1>
+      <p className="scene-weather-reading"><span>{environment?.weatherLabel ?? "感受此刻…"}</span>{environment?.temperature !== undefined && <span className="scene-temperature">{Math.round(environment.temperature)}<small>°C</small></span>}</p>
+      <p className="scene-local-time">{environment ? <>{environment.phaseLabel} · {environment.timeSource} <time>{environment.localTime}</time></> : "正在感受此刻的光线"}</p>
+      <div className="scene-calendar-placement"><StreetCalendar date={environment?.localDate} /></div>
+      {hasReply && <p className="scene-reply-reminder">邮箱里，多了一封回信。</p>}
+      <button className="scene-write-link shop-entry-door" type="button" disabled={entering || delivering} onPointerEnter={onPrepareEntry} onFocus={onPrepareEntry} onClick={onEnter}>{entering ? "正在开门…" : "推门进店"}<ArrowRight size={17} /></button>
+      {(environment?.live || environment?.placeName) && <p className="scene-data-credit">{environment.live && <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">天气 · Open-Meteo</a>}{environment.placeName && <a href="https://www.bigdatacloud.com/" target="_blank" rel="noreferrer">地点 · BigDataCloud</a>}</p>}
+    </div>
+    <div className="whole-shop-picture"><Image src={shop.scenes.outdoor.src} alt={`${shop.name}的室外门面`} fill unoptimized sizes="(max-width: 700px) 94vw, 65vw" style={sceneImageStyle(shop.scenes.outdoor)} preload /><div className={`personal-shop-sign sign-${shop.signStyle}`}>{shop.name}</div></div>
+    <div className="whole-shop-actions"><button ref={mailbox} id="scene-mailbox" type="button" onClick={onOpenMailbox} disabled={delivering || (!shop.acceptingLetters && !ready && !hasReply)}><EnvelopeSimple size={19} />{delivering ? "正在投递…" : ready ? "投递这封信" : hasReply ? "读一封回信" : shop.acceptingLetters ? "取一张信纸" : "暂不接收新信"}</button>{ready && <button type="button" onClick={onEditLetter}>展开修改</button>}</div>
+    {error && <p className="whole-shop-status" role="alert">{error}</p>}
+    {(entering || entryError) && <p className="scene-entry-status" role={entryError ? "alert" : "status"}>{entryError ?? "正在为你点亮店里的灯…"}</p>}
+    <div className="scene-corner-note"><span>门外与门内，是同一家小店</span></div>
+  </section>;
 }

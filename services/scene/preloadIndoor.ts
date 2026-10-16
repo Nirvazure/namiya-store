@@ -1,5 +1,6 @@
-const entryLayers = ["background", "keeper", "counter", "decor"].map(name => `/indoor/optimized/grandpa/${name}.webp`);
-let pending: Promise<void> | undefined;
+import { defaultShop, type Shop } from "@/domain/shops";
+
+const pending = new Map<string, Promise<void>>();
 
 function preloadImage(src: string) {
   return new Promise<void>((resolve, reject) => {
@@ -11,7 +12,10 @@ function preloadImage(src: string) {
   });
 }
 
-export function preloadIndoorEntry() {
-  pending ??= Promise.all(entryLayers.map(preloadImage)).then(() => {}).catch(error => { pending = undefined; throw error; });
-  return pending;
+export function preloadIndoorEntry(shop: Shop = defaultShop) {
+  const scene = shop.scenes.indoor;
+  const paths = scene.mode === "layers" && scene.templateId ? ["background", "keeper", "counter", "decor"].map(name => `/indoor/optimized/${scene.templateId}/${name}.webp`) : [scene.src];
+  const key = paths.join("|");
+  if (!pending.has(key)) pending.set(key, Promise.all(paths.map(preloadImage)).then(() => {}).catch(error => { pending.delete(key); throw error; }));
+  return pending.get(key)!;
 }

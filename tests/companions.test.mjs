@@ -129,7 +129,7 @@ test('volume changed while audio is starting is retained after playback resumes'
 });
 
 test('focus counts once across note changes, pauses, resets, and ends quietly at zero', t => {
-  t.mock.timers.enable({ apis: ['setInterval'] });
+  t.mock.timers.enable({ apis: ['Date', 'setInterval'], now: Date.now() });
   usePomodoroStore.setState(usePomodoroStore.getInitialState());
   const stop = watchFocusClock();
   const clock = usePomodoroStore.getState();

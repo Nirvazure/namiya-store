@@ -2,7 +2,8 @@ import { musicTracks } from "@/domain/musicTracks";
 import { AmbientAudio } from "@/services/audio/ambientAudio";
 import { useMusicStore } from "@/store/useMusicStore";
 
-type Engine = Pick<AmbientAudio, "play" | "pause" | "setVolume" | "dispose">;
+type Engine = Pick<AmbientAudio, "play" | "pause" | "setVolume" | "dispose"> & Partial<Pick<AmbientAudio, "setTrack">>;
+function effectiveVolume(state: { volume: number; ducked?: boolean }) { return state.volume * (state.ducked ? .2 : 1); }
 
 /** One audio owner, independent of which scene or paper note is visible. */
 export function createMusicPlayback(createEngine: () => Engine = () => new AmbientAudio(), store = useMusicStore) {
@@ -20,10 +21,21 @@ export function createMusicPlayback(createEngine: () => Engine = () => new Ambie
       else {
         // Construct and resume in the playback gesture, never on scene entry.
         audio ??= createEngine();
-        await audio.play(trackId ?? state.trackId, state.volume);
-        if (generation === version && store.getState().volume !== state.volume) audio.setVolume(store.getState().volume);
+        await audio.play(trackId ?? state.trackId, effectiveVolume(state));
+        if (generation === version && effectiveVolume(store.getState()) !== effectiveVolume(state)) audio.setVolume(effectiveVolume(store.getState()));
       }
-      if (generation === version) store.setState({ trackId: trackId ?? state.trackId, isPlaying: !pausing });
+      if (generation === version) {
+        const current = store.getState();
+        if (current.shopId !== state.shopId) {
+          // A delayed playback gesture must not overwrite the next shop's preference.
+          audio?.setTrack?.(current.trackId);
+          store.setState({ isPlaying: !pausing });
+        } else {
+          const selected = trackId ?? state.trackId;
+          if (trackId) current.setTrack?.(selected);
+          store.setState({ trackId: selected, isPlaying: !pausing });
+        }
+      }
     } catch {
       if (generation === version) store.setState({ error: pausing ? "暂时无法暂停，请再试一次。" : "声音暂时没有响起，轻按播放再试一次。" });
     } finally {
@@ -36,7 +48,8 @@ export function createMusicPlayback(createEngine: () => Engine = () => new Ambie
     toggle: () => request(),
     mount() {
       const unsubscribe = store.subscribe((state, previous) => {
-        if (state.volume !== previous.volume) audio?.setVolume(state.volume);
+        if (effectiveVolume(state) !== effectiveVolume(previous)) audio?.setVolume(effectiveVolume(state));
+        if (state.trackId !== previous.trackId && !state.starting) audio?.setTrack?.(state.trackId);
       });
       return () => {
         generation++;

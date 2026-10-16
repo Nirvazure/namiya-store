@@ -3,8 +3,7 @@
 import { motion, useReducedMotion } from "motion/react";
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { useLetterDialog } from "@/components/letter/useLetterDialog";
-import { characters } from "@/domain/characters";
-import type { CharacterId } from "@/domain/letterTypes";
+import { prepareLogin } from "@/services/auth/login";
 import { useLetterStore } from "@/store/useLetterStore";
 import "./letter-paper.css";
 
@@ -20,12 +19,12 @@ function LetterDesk() {
   const errorId = useId();
   const draft = useLetterStore((state) => state.draft);
   const storeError = useLetterStore((state) => state.error);
-  const selectedCharacterId = useLetterStore((state) => state.selectedCharacterId);
-  const privacyMode = useLetterStore((state) => state.privacyMode);
+  const shop = useLetterStore((state) => state.shop);
+  const userId = useLetterStore((state) => state.userId);
+  const signature = useLetterStore((state) => state.signature);
   const updateDraft = useLetterStore((state) => state.updateDraft);
   const closeLetter = useLetterStore((state) => state.closeLetter);
-  const setSelectedCharacter = useLetterStore((state) => state.setSelectedCharacter);
-  const setPrivacyMode = useLetterStore((state) => state.setPrivacyMode);
+  const setSignature = useLetterStore((state) => state.setSignature);
   const prepareEnvelope = useLetterStore((state) => state.prepareEnvelope);
   const dialogRef = useLetterDialog(true, closeLetter);
   const reducedMotion = useReducedMotion();
@@ -34,7 +33,7 @@ function LetterDesk() {
   const [isFolding, setIsFolding] = useState(false);
   const [localError, setLocalError] = useState("");
   const error = localError || storeError;
-  const recipient = characters.find((character) => character.id === selectedCharacterId);
+  const recipient = shop.id === "grandpa" ? "杂货店爷爷" : `${shop.name}的店主`;
 
   useLayoutEffect(() => {
     const textarea = textareaRef.current;
@@ -105,13 +104,14 @@ function LetterDesk() {
                   <span className="letter-sheet__mark" aria-hidden="true">浪矢</span>
                   <span>心事便笺<br /><span lang="en">Namiya General Store</span></span>
                 </div>
-                <h2 id={titleId} className="letter-sheet__salutation">亲爱的{recipient?.name ?? "杂货店爷爷"}：</h2>
+                <h2 id={titleId} className="letter-sheet__salutation">亲爱的{recipient}：</h2>
                 <label className="letter-sheet__title">
                   <span className="sr-only">标题，可不写</span>
                   <input
                     aria-label="标题，可不写"
                     placeholder="关于……（标题，可以留白）"
                     value={draft.title}
+                    maxLength={120}
                     disabled={isFolding}
                     onChange={(event) => updateDraft({ title: event.target.value })}
                   />
@@ -126,6 +126,7 @@ function LetterDesk() {
                   aria-describedby={error ? errorId : undefined}
                   placeholder={"见字如面。\n\n有些话，一直没能说出口……"}
                   value={draft.body}
+                  maxLength={10000}
                   disabled={isFolding}
                   onChange={(event) => {
                     updateDraft({ body: event.target.value });
@@ -142,18 +143,14 @@ function LetterDesk() {
 
           <div className="namiya-writing-desk__below">
             <details className="namiya-writing-desk__settings">
-              <summary>{recipient?.name ?? "杂货店爷爷"}收 · {privacyMode === "private" ? "仅店内可读" : "允许未来匿名互助"}<span>更改</span></summary>
+              <summary>{recipient}收 · {signature.trim() ? `署名：${signature.trim()}` : "匿名来信"}<span>署名</span></summary>
               <div className="namiya-writing-desk__settings-content">
-                <label>把信交给
-                  <select value={selectedCharacterId} disabled={isFolding} onChange={(event) => setSelectedCharacter(event.target.value as CharacterId)}>
-                    {characters.map((character) => <option key={character.id} value={character.id}>{character.name}</option>)}
-                  </select>
-                </label>
-                <label className="namiya-writing-desk__privacy"><input type="checkbox" checked={privacyMode === "anonymous"} disabled={isFolding} onChange={(event) => setPrivacyMode(event.target.checked ? "anonymous" : "private")} /><span>允许这封信用于未来的匿名互助</span></label>
-                <p>默认私密。匿名互助选项仅保存你的意愿，目前不会公开分发。</p>
+                <label>想留下的名字（可不填）<input value={signature} maxLength={40} disabled={isFolding} onChange={event => setSignature(event.target.value)} placeholder="不填就是匿名来信" /></label>
+                <p>只由你与收信方阅读。署名只展示这里填写的名字，不附带账号或个人小店链接。</p>
               </div>
             </details>
             {error ? <p id={errorId} className="namiya-writing-desk__error" role="alert">{error}</p> : null}
+            {!userId ? <p className="namiya-writing-desk__error">草稿已留在这台设备。<button type="button" onClick={() => prepareLogin()}>登录后寄信</button></p> : null}
             <div className="namiya-writing-desk__actions">
               <p>不用措辞完美，写到这里就很好。</p>
               <button className="namiya-writing-desk__fold-button" onClick={foldLetter} disabled={isFolding} type="button">
