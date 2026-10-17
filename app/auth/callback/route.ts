@@ -5,6 +5,7 @@ import { safeReturnPath } from "@/lib/server/redirects";
 import { initializeAccount } from "@/lib/server/account";
 
 export async function GET(request: Request) {
+  const origin = new URL(process.env.NEXT_PUBLIC_SITE_URL || request.url).origin;
   try {
     const url = new URL(request.url);
     const code = url.searchParams.get("code");
@@ -12,18 +13,18 @@ export async function GET(request: Request) {
     const client = await createClient();
     const { data, error } = await client.auth.exchangeCodeForSession(code);
     if (error) fail(400, "登录链接已过期，请重新登录");
-    const next = safeReturnPath(url.searchParams.get("next"), url.origin);
+    const next = safeReturnPath(url.searchParams.get("next"), origin);
     if (data?.user) {
       try { await initializeAccount(data.user); }
       catch {
-        const destination = new URL(next, url.origin);
+        const destination = new URL(next, origin);
         destination.searchParams.set("error", "account_initialization_failed");
         return NextResponse.redirect(destination);
       }
     }
-    return NextResponse.redirect(new URL(next, url.origin));
+    return NextResponse.redirect(new URL(next, origin));
   } catch {
     // Keep canceled/expired sign-ins in the product and expose no upstream details.
-    return NextResponse.redirect(new URL("/?error=auth_callback_failed", request.url));
+    return NextResponse.redirect(new URL("/?error=auth_callback_failed", origin));
   }
 }

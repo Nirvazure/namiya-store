@@ -6,8 +6,9 @@ import { safeReturnPath } from "@/lib/server/redirects";
 export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
-    const next = safeReturnPath(url.searchParams.get("next"), url.origin);
-    const callback = new URL("/auth/callback", url.origin);
+    const origin = new URL(process.env.NEXT_PUBLIC_SITE_URL || request.url).origin;
+    const next = safeReturnPath(url.searchParams.get("next"), origin);
+    const callback = new URL("/auth/callback", origin);
     callback.searchParams.set("next", next);
     const client = await createClient();
     const { data, error } = await client.auth.signInWithOAuth({ provider: "github", options: { redirectTo: callback.toString() } });
