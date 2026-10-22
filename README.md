@@ -19,15 +19,17 @@
 
 ```powershell
 npm ci
-Copy-Item .env.example .env.local
+Copy-Item .env.example .env
 # 填写本地环境变量后：
 npm run db:generate
 npm run dev
 ```
 
-无密钥也可以构建并浏览内置场景，服务端不会用假账号、假信件或模板 AI 回复代替未配置的服务。数据库、OAuth 回调及 Storage 的部署步骤见 [部署与验收](docs/acceptance.md)。共享数据库迁移需要先审阅 SQL，再执行 `npm run db:deploy`；不要使用 `prisma db push`。
+无密钥也可以构建并浏览内置场景，服务端不会用假账号、假信件或模板 AI 回复代替未配置的服务。数据库、OAuth 回调及 Storage 的部署步骤见 [部署与验收](docs/acceptance.md)。数据库仅保留运行所需的 `DATABASE_URL`；已移除迁移命令，保留已应用的 SQL 历史用于审计和隔离测试，不会在构建或启动时执行迁移。
 
 账号共用 Supabase `auth.users.id`，各站独立建立会话；不读取其他应用的业务资料，也不继承其管理员角色。本站退出仅清除本站会话。
+
+Auth 统一读取 `SUPABASE_URL` 和 `SUPABASE_PUBLISHABLE_KEY`：Vercel 关联同名 Shared 变量，本地在 `.env` 中配置。登录与会话刷新均在服务端处理，无需 `NEXT_PUBLIC_` 别名。关联后移除旧的 `SUPABASE_KEY` 与项目级同名重复配置，并重新部署。
 
 ## 验证
 
@@ -53,4 +55,4 @@ npm run test:http      # 生产构建后的纯 HTTP / SSR 烟测，不启动浏�
 
 图源位于 `public/icon.jpg`。执行 `node scripts/prepare-site-icons.mjs`，会裁去多余白边、保留 12px 安全边距，并生成透明背景的 `public/site-logo.png`；同时重新生成 `app/favicon.ico`、`app/icon.png`、`app/apple-icon.png`，以及 Open Graph／Twitter 分享图片。各尺寸保持原比例，Next.js 按文件约定输出图标和图片元数据。
 
-正式部署时设置 `NEXT_PUBLIC_SITE_URL` 为完整站点地址。Vercel 部署默认读取 `VERCEL_PROJECT_PRODUCTION_URL`；本地默认 `http://localhost:3000`。字体沿用远端新增的本地字体，不依赖构建期间下载 Google Fonts。
+无需配置站点地址变量。登录和回调使用当前请求的 origin，支持本地、预览域名与自定义域名；这些地址仍需加入 Supabase 的回调白名单。分享元数据优先读取 Vercel 自动提供的 `VERCEL_PROJECT_PRODUCTION_URL`，其次使用 `VERCEL_URL`，本地默认 `http://localhost:3000`。字体沿用远端新增的本地字体，不依赖构建期间下载 Google Fonts。

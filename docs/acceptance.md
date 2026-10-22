@@ -4,12 +4,12 @@
 
 代码默认不包含任何凭据；未配置时可以浏览四组内置场景、听音景、使用番茄钟，账号、真实信件和上传会明确返回未配置错误，不生成假账号、假收件或模板 AI 回信。
 
-1. 将 `.env.example` 复制为 `.env.local`，填写已有 YQYHub Auth 配置、服务端 Storage key、指向 `namiya_store` 的两个数据库连接，以及 OpenAI key。不要将真实密钥提交到 Git。
+1. 本地从 `.env.example` 创建 `.env`，填写 `SUPABASE_URL`、`SUPABASE_PUBLISHABLE_KEY`、服务端 Storage key、指向 `namiya_store` 的 `DATABASE_URL`，以及 OpenAI key。Vercel 中关联同名的两个 Auth Shared 变量，选择所需的 Production、Preview、Development 环境；移除旧 `SUPABASE_KEY` 及项目级同名重复配置，然后重新部署。本地 `.env` 不会自动同步 Shared。不要将真实密钥提交到 Git。
 2. 审阅 `prisma/migrations/20261015000000_initial/migration.sql`。它仅新增 `namiya_store` 业务 schema、外键与约束，以及 `namiya-private` 私桶和 `namiya-scenes` 公桶；不迁移或修改 RapperRank、ArtMind 业务表。
-3. 对共享数据库的迁移应在批准后执行 `npm run db:deploy`。不要用 `prisma db push` 替代：迁移包含 Auth 外键、Storage 桶及权限配置。
+3. 数据库已完成部署，当前只保留 `DATABASE_URL`。迁移命令已移除，现有 SQL 历史保留用于审计和隔离测试。未来如需修改数据库，应单独设计和审阅变更，不在构建或启动时自动执行迁移。
 4. 在 YQYHub 的 Authentication → Redirect URLs 中追加本地、预览和生产的 `/auth/callback` 地址，保留其他产品现有设置，不改写全局 Site URL。
 5. 私桶必须保持 private，公桶仅存发布后的 WebP 场景；浏览器没有本产品业务表或私桶的 Data API 权限。
-6. 配置生产完整 `NEXT_PUBLIC_SITE_URL`，运行 `npm run build`，再部署。
+6. 无需配置站点地址变量：OAuth 使用当前请求的 origin，分享元数据使用 Vercel 自动提供的生产域名或部署域名。运行 `npm run build`，再部署；本地分享元数据默认使用 `http://localhost:3000`。
 
 初次代码验收时未向共享 Supabase 应用迁移，未修改 OAuth 设置，未调用真实付费 AI / TTS；按用户要求未执行浏览器测试。当时远端已同步至 `8d509b5`，原有天气、日历、磁带和本地字体改动已合并保留。数据库后续执行结果见下方记录。
 

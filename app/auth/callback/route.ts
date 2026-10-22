@@ -5,7 +5,7 @@ import { safeReturnPath } from "@/lib/server/redirects";
 import { initializeAccount } from "@/lib/server/account";
 
 export async function GET(request: Request) {
-  const origin = new URL(process.env.NEXT_PUBLIC_SITE_URL || request.url).origin;
+  const origin = new URL(request.url).origin;
   try {
     const url = new URL(request.url);
     const code = url.searchParams.get("code");
