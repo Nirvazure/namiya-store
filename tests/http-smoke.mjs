@@ -11,7 +11,7 @@ const { port } = listener.address();
 await new Promise(resolve => listener.close(resolve));
 const base = `http://127.0.0.1:${port}`;
 const env = { ...process.env };
-for (const key of ["SUPABASE_URL", "SUPABASE_KEY", "NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY", "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", "SUPABASE_SERVICE_ROLE_KEY", "DATABASE_URL", "DIRECT_DATABASE_URL", "OPENAI_API_KEY"]) env[key] = "";
+for (const key of ["SUPABASE_URL", "SUPABASE_PUBLISHABLE_KEY", "SUPABASE_SERVICE_ROLE_KEY", "DATABASE_URL", "OPENAI_API_KEY"]) env[key] = "";
 const server = spawn(process.execPath, ["node_modules/next/dist/bin/next", "start", "--hostname", "127.0.0.1", "--port", String(port)], { env, windowsHide: true, stdio: ["ignore", "pipe", "pipe"] });
 let logs = "";
 server.stdout.on("data", chunk => { logs += chunk; });

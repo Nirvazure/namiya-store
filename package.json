@@ -19,8 +19,7 @@
     "test": "npm run test:unit && npm run test:legacy",
     "test:unit": "vitest run",
     "test:http": "node tests/http-smoke.mjs",
-    "db:generate": "prisma generate",
-    "db:deploy": "prisma migrate deploy"
+    "db:generate": "prisma generate"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",
